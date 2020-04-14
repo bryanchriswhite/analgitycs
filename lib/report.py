@@ -11,5 +11,3 @@ def leaderboard(totals_dict: TotalsDict):
 def __print_totals(t):
     for i, author, total, pct in t:
         print(str.format("#{}: {} ({}% | {})", i, author, pct, total))
-
-

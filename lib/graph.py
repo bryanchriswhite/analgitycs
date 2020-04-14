@@ -17,8 +17,9 @@ def repo_stackplots(totals_dict: my_types.TotalsDict):
     plt_index = 0
 
     # TODO: add time
-    x = np.arange(100)
-    # x = np.array([])
+    # x = np.arange(100)
+    # x = np.arange(2)
+    x = np.array([0, 1, 2, 3])
 
     for repo, total_list in totals_to_graph.items():
         i = floor(plt_index / 2)

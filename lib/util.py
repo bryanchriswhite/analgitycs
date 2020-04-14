@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+import os.path as path
 
 from lib.my_types import AllRepoFileAuthors, FileAuthors, RepoAuthorTotals, TotalsDict
 
@@ -13,6 +14,19 @@ def add_lines(counts: FileAuthors, author, start, end):
 
 def to_percent(n, total):
     return round((n / total) * 100, 2)
+
+
+def filter_ext(ext_whitelist, excluded_exts=None):
+    def _filter(filename):
+        ext = path.splitext(filename)[1]
+        exclude = filename == "" or ext not in ext_whitelist
+
+        if exclude and excluded_exts is not None:
+            excluded_exts.add(ext)
+
+        return exclude
+
+    return _filter
 
 
 def repo_counts_to_totals_dict(repo_counts: AllRepoFileAuthors):

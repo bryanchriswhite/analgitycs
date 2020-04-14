@@ -1,6 +1,9 @@
 from typing import List
 from queue import SimpleQueue
+from concurrent.futures import ThreadPoolExecutor
 import subprocess
+
+import util
 
 
 class WorktreeQueue:
@@ -13,6 +16,10 @@ class WorktreeQueue:
     def __enter__(self):
         # init queue
         self.__q = SimpleQueue()
+
+        with ThreadPoolExecutor(self.__max) as executor:
+            # executor.submit()
+            counts = count.repo(executor, repo_root, util.filter_ext)
 
         # set up n workers with loop
         # workers pull from queue
