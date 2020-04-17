@@ -1,3 +1,5 @@
+from datetime import date
+
 from typing import Dict, List, Tuple
 import os.path as path
 
@@ -30,27 +32,34 @@ def filter_ext(ext_whitelist, excluded_exts=None):
 
 
 def repo_counts_to_totals_dict(repo_counts: AllRepoFileAuthors):
-    totals: Dict[str, Dict[str, int]] = {}
-    total_lines: Dict[str, int] = {}
+    totals: Dict[str, Dict[str, Dict[str, int]]] = {}
 
-    for repo, files_author_line_counts in repo_counts.items():
-        repo_totals: Dict[str, int] = {}
-        total_lines[repo] = 0
+    for repo, commit_author_line_counts in repo_counts.items():
+        if repo not in totals:
+            totals[repo] = {}
+        for commit_date, files_author_line_counts in commit_author_line_counts.items():
+            if commit_date not in totals[repo]:
+                totals[repo][commit_date] = {}
+            for author_line_counts in files_author_line_counts.values():
+                for author, counts in author_line_counts.items():
+                    if author not in totals[repo][commit_date]:
+                        totals[repo][commit_date][author] = 0
+                    totals[repo][commit_date][author] += counts
 
-        for author_line_counts in files_author_line_counts.values():
-            for author, counts in author_line_counts.items():
-                total_lines[repo] += counts
-
-                if author not in repo_totals:
-                    repo_totals[author] = 0
-                repo_totals[author] += counts
-        totals[repo] = repo_totals
-
-    totals_dict: TotalsDict = {}
-    for repo, totals in totals.items():
-        total_list: List[Tuple[int, str, float]] = [(*tup, to_percent(tup[1], total_lines[repo])) for tup in totals.items()]
-        total_list.sort(key=lambda x: x[1], reverse=True)
-        total_list: RepoAuthorTotals = [[i + 1, *tup] for i, tup in enumerate(total_list)]
-
-        totals_dict[repo] = total_list
-    return totals_dict, total_lines
+    # totals_dict: TotalsDict = {}
+    # total_list: List[Tuple[int, str, float]]
+    # for repo, totals in totals.items():
+    #     for commit_date, total in totals:
+    #
+    #     # [(k, v, to_percent(v, total_lines[repo])) for cd,  in totals.items()]
+    #
+    #         total_list: List[Tuple[int, str, float]] = [(*tup, to_percent(tup[1], total_lines[repo])) for tup in totals.items()]
+    #         total_list.sort(key=lambda x: x[1], reverse=True)
+    #         total_list: RepoAuthorTotals = [[i + 1, *tup] for i, tup in enumerate(total_list)]
+    #
+    #         # TODO: MAY BE MORE THAN ONE COMMIT PER DAY!!!
+    #         if commit_date not in totals_dict[repo]:
+    #             totals_dict[repo][commit_date] = {}
+    #         totals_dict[repo][commit_date] = total_list
+    # return totals_dict, total_lines
+    return totals

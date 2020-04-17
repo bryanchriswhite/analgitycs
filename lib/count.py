@@ -1,23 +1,30 @@
-from re import compile as re_compile
+from concurrent.futures import ThreadPoolExecutor, wait
+import re
 
-from lib.util import add_lines
 from lib import git, my_types
+from lib.util import add_lines
 
-header_re = re_compile("\w{,40} \d+ (\d+)(:? (\d+))?")
-author_re = re_compile("author (.+)$")
+header_re = re.compile(r'\w{,40} \d+ (\d+)(:? (\d+))?')
+author_re = re.compile(r'author (.+)$')
 
 
-def repo(executor, repo_root, filter_func=None):
+def commit(executor: ThreadPoolExecutor, repo_root, commit_date: str, filter_func=None, done=None):
     counts = {}
     files = git.ls_files(repo_root=repo_root)
     for f in files:
         if filter_func is not None and filter_func(f):
             continue
-        counts[f]: my_types.FileAuthors = executor.submit(__count_file, f, repo_root)
-    return counts
+        counts[f]: my_types.FileAuthors = executor.submit(file, f, repo_root)
+
+    def _done():
+        wait([v for v in counts.values()])
+        done()
+    executor.submit(_done)
+    # TODO: find a better way to get commit_date
+    return commit_date, counts
 
 
-def __count_file(f, repo_root):
+def file(f, repo_root):
     counts: my_types.FileAuthors = {}
     last_author_header_ln = 1
     last_header_ln = 1

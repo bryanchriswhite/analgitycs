@@ -1,13 +1,16 @@
 from typing import Dict, Tuple, List
 
 FileAuthors = Dict[str, int]
-RepoFileAuthors = Dict[str, FileAuthors]
+CommitFileAuthors = Dict[str, FileAuthors]
+RepoFileAuthors = Dict[str, CommitFileAuthors]
 AllRepoFileAuthors = Dict[str, RepoFileAuthors]
 
                                     #  [ author[ pos name count  pct ] ]
-RepoAuthorTotals = List[List[any]]  # List[List[int, str, int, float]]
-TotalList = List[Tuple[int, str, float]]
-TotalsDict = Dict[str, TotalList]
+RepoAuthorTotals = List[List[any]]  # List[List[dint, str, int, float]]
+            # isodate --v
+TotalList = List[Tuple[str, int, str, float]]
+                  # isodate --v
+TotalsDict = Dict[str, Tuple[str, TotalList]]
 
 # test_dict: AllRepoFileAuthors = {
 #     'repo name': {
