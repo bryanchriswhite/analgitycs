@@ -6,7 +6,7 @@ import re
 from lib import git, count
 from lib.worktree import Worktree
 
-# e.g.: 9169d99 (wip, 2020-04-14 17:48:56 +0200)
+# e.g.: 9169d99 (wip, 2020-04-14T17:48:56+02:00)
 date_group_re = r'(\d{4,}-\d{2,}-\d{2,}T\d{2,}:\d{2,}:\d{2,}.\d{2,}:\d{2,})'
 commit_re = re.compile(r'^(\w+)\s+\(.*,\s+' + date_group_re + r'\)$')
 default_max_worktrees = 20
@@ -23,20 +23,12 @@ class RepoStat:
         self.__max_worktrees = max_worktrees
 
     # TODO: shutdown executors
-    def line_authors_range(self, range_ref: str, file_filter=None, limit=0):
+    def blame(self, range_ref: str, file_filter=None, limit=0):
         worktree_executor = ThreadPoolExecutor(self.__max_worktrees)
         commit_fs = self.commits(worktree_executor, range_ref, limit=limit)
-        # commits = [f.result() for f in commits if f.result() is not None]
-
-        #                                 my_types.RepoFileAuthors
         commit_count_fs: List[Future] = []
-        # commit_count_fs: List[Tuple[date, Future]] = []
-        # commit_count_fs: Dict[date, Future] = []
-        # print(wait(commit_fs))
         wait(commit_fs, return_when=ALL_COMPLETED)
         commits = [f.result() for f in commit_fs]
-        # print(f'commits {commits}')
-        print(f'len(commits) {len(commits)}')
         for commit_hash, commit_date in commits:
             count_executor = ThreadPoolExecutor(self.__max_workers)
             wt = Worktree(self.__root, commit_hash, commit_hash)
@@ -67,6 +59,5 @@ class RepoStat:
             if commit_hash is None or commit_date is None:
                 return
 
-            # return commit_hash, datetime.fromisoformat(commit_date)
             return commit_hash, isoparse(commit_date)
         return [executor.submit(parse_line, l) for l in log_lines]

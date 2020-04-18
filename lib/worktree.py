@@ -1,27 +1,15 @@
 from typing import List
-from threading import Lock
 import os.path as path
 import subprocess
-
-
-class Iterator:
-    def __init__(self, worktrees):
-        self.__i = 0
-        self.__worktrees = worktrees
-
-    def __next__(self):
-        self.__worktrees.get(self.__i)
-        self.__i += 1
-        return next
 
 
 class Worktree:
     __base_cmd: List[str] = ['git', 'worktree']
 
     def __init__(self, root: str, path: str, hash: str):
-        self.__root = root
-        self.__path = path
-        self.__hash = hash
+        self.__root,\
+        self.__path,\
+        self.__hash = root, path, hash
 
     def __enter__(self):
         self.add()
