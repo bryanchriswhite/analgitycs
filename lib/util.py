@@ -25,21 +25,3 @@ def filter_ext(ext_whitelist, excluded_exts=None):
             excluded_exts.add(ext)
         return exclude
     return _filter
-
-
-def sum_repo_commit_lines(repo_results: Dict[str, List[Tuple[str, Dict[str, Dict[str, int]]]]]):
-    totals: TotalsDict = {}
-    commit_dates: List[datetime] = []
-    for repo, commit_file_authors in repo_results.items():
-        if repo not in totals:
-            totals[repo] = []
-        for commit_date, file_authors in commit_file_authors:
-            commit_dates.append(commit_date)
-            commit_author_totals: Dict[str, int] = {}
-            for author_lines in file_authors.values():
-                for author, counts in author_lines.items():
-                    if author not in commit_author_totals:
-                        commit_author_totals[author] = int(0)
-                    commit_author_totals[author] += counts
-            totals[repo].append((commit_date, commit_author_totals))
-    return totals
