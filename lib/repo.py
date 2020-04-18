@@ -28,7 +28,7 @@ class RepoStat:
         commit_fs = self.commits(worktree_executor, range_ref, limit=limit)
         commit_count_fs: List[Future] = []
         wait(commit_fs, return_when=ALL_COMPLETED)
-        commits = [f.result() for f in commit_fs]
+        commits = [f.result() for f in commit_fs if f.result() is not None]
         for commit_hash, commit_date in commits:
             count_executor = ThreadPoolExecutor(self.__max_workers)
             wt = Worktree(self.__root, commit_hash, commit_hash)

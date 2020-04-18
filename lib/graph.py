@@ -7,15 +7,13 @@ from lib.my_types import RepoAuthorTotals, TotalsDict
 
 
 def repo_stackplots(totals_dict: TotalsDict):
-    nrows = 2
-    fig, ax = plt.subplots(nrows, ceil(4 / nrows), figsize=(10, 15))
+    # nrows = len(totals_dict.keys())
+    nrows = 4
+    fig, ax = plt.subplots(nrows, 1, figsize=(10, 20))
     plt.ylabel('Lines of code')
     plt_index = 0
 
     for repo, commit_totals in totals_dict.items():
-        i = floor(plt_index / 2)
-        j = plt_index % 2
-
         commit_dates = [tup[0] for tup in commit_totals]
         author_ys: Dict[str, List[int]] = {}
 
@@ -33,8 +31,8 @@ def repo_stackplots(totals_dict: TotalsDict):
         ys = np.vstack(list(author_ys.values()))
 
         x = [d.isoformat() for d in commit_dates]
-        ax[i, j].stackplot(x, *ys, labels=labels)
-        ax[i, j].legend(loc='upper left')
+        ax[plt_index].stackplot(x, *ys, labels=labels)
+        ax[plt_index].legend(loc='upper left')
 
         plt_index += 1
     plt.show()
