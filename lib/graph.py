@@ -9,7 +9,7 @@ from lib.my_types import RepoAuthorTotals, TotalsDict
 
 def repo_stackplots(totals_dict: TotalsDict):
     # repo_names: Sized[str] = totals_dict.keys()
-    repo_names: List[str] = totals_dict.keys()
+    repo_names: List[str] = list(totals_dict.keys())
 
     nrows = 2
     # fig, ax = plt.subplots(nrows, ceil(len(repo_names) / nrows), figsize=(10, 15))
@@ -17,46 +17,63 @@ def repo_stackplots(totals_dict: TotalsDict):
     plt.ylabel('Lines of code')
     plt_index = 0
 
-    # TODO: add time
-    # commit_dates = np.arange(100)
-    # commit_dates = np.arange(2)
-    # commit_dates = np.array([0, 1, 2, 3])
-
     for repo, commit_totals in totals_dict.items():
         i = floor(plt_index / 2)
         j = plt_index % 2
 
         # Sort all authors' history
-        commits = [(date.fromisoformat(d), v) for d, v in totals_dict['uplink-c'].items()]
-        commits.sort(key=lambda x: x[0])
+        # commit_totals.sort(key=lambda x: x[0])
 
         # commit_dates = [date.fromisoformat(d) for d in commit_totals.keys()]
-        commit_dates: Sized[date] = []
+        commit_dates = [tup[0] for tup in commit_totals]
+        # commit_dates: Sized[date] = list()
         author_ys: Dict[str, List[int]] = {}
 
         # Build `commit_dates` and `author_ys`
-        for commit_date, author_lines in commits:
-            commit_dates.append(commit_date)
+        for n, (commit_date, author_lines) in enumerate(commit_totals):
+            # commit_dates.append(date.fromisoformat(commit_date))
+            # commit_dates.append(commit_date)
+            for author, y in author_ys.items():
+                if author not in author_lines.keys():
+                    author_ys[author].append(0)
             for author, lines in author_lines.items():
                 if author not in author_ys:
-                    author_ys[author]: List[int] = [0 for _ in range(len(commit_dates) - 1)]
+                    author_ys[author]: List[int] = [0 for _ in range(n)]
                 author_ys[author].append(lines)
 
-        print(commit_dates)
-        print()
-        print(author_ys)
-        print()
-        print([x for x in author_ys.values()])
+        # print(commit_dates)
+        # print()
+        # print(author_ys)
+        # print()
+        # print([x for x in author_ys.values()])
 
         # ys = [t.values() for t in commit_totals.values()]
         # ys = [[for author, count in t.items()] for commit_date, t in commit_totals]
 
-    #     ys = [[n[2]] for n in total_list]
-    #     labels = [n[1] for n in total_list]
-        labels = author_ys.keys()
+        #     ys = [[n[2]] for n in total_list]
+        #     labels = [n[1] for n in total_list]
+        labels = np.array(list(author_ys.keys()))
+        ys = np.array([np.array(x) for x in author_ys.values()])
+        # np.vstack(author_ys.values())
 
-        ax[i,j].stackplot(commit_dates, author_ys.values(), labels=labels)
-        ax[i,j].legend(loc='upper left')
+        print(f'len commit dates & ys: {[len(y) for y in (commit_dates, *ys)]}')
+        for v in author_ys.values():
+            print(v)
+            print()
+        # print([type(y) for y in ys])
+        # print(type(ys[0][0]))
+        # print(type(ys))
+        # print(ys)
+
+        # x = [0, 1, 2, 3]
+        x = [d.isoformat() for d in commit_dates]
+        y1 = [1, 1, 1, 1]
+        y2 = [2, 2, 2, 2]
+        y3 = [3, 3, 3, 3]
+        y4 = [4, 4, 4, 4]
+        # ys = [y1, y2, y3, y4]
+        ax[i, j].stackplot(x, *ys, labels=labels)
+        ax[i, j].legend(loc='upper left')
 
         plt_index += 1
     plt.show()

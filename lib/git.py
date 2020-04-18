@@ -26,7 +26,8 @@ def ls_files(repo_root, dir=None):
 
 
 def log(repo_root, rev_range):
-    args = ["git", "log", "--format=reference", rev_range]
+    # args = ["git", "log", "--format=reference", rev_range]
+    args = ["git", "log", "--format=reference", "--date=iso-strict", rev_range]
     p = subprocess.run(args,
                        capture_output=True,
                        cwd=repo_root)

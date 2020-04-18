@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from typing import Dict, List, Tuple
 import os.path as path
@@ -31,20 +31,27 @@ def filter_ext(ext_whitelist, excluded_exts=None):
     return _filter
 
 
-def repo_counts_to_totals_dict(repo_counts: AllRepoFileAuthors):
-    totals: Dict[str, Dict[str, Dict[str, int]]] = {}
+def sum_repo_commit_lines(repo_results: Dict[str, List[Tuple[str, Dict[str, Dict[str, int]]]]]):
+    totals: TotalsDict = {}
+    commit_dates: List[datetime] = []
+    for repo, commit_file_authors in repo_results.items():
+        print(f'len(commit_file_authors {len(commit_file_authors)}')
+        print(commit_file_authors[0])
+        # Sort all authors' history
+        # commit_author_line_counts.sort(key=lambda x: x[0])
 
-    for repo, commit_author_line_counts in repo_counts.items():
         if repo not in totals:
-            totals[repo] = {}
-        for commit_date, files_author_line_counts in commit_author_line_counts.items():
-            if commit_date not in totals[repo]:
-                totals[repo][commit_date] = {}
-            for author_line_counts in files_author_line_counts.values():
-                for author, counts in author_line_counts.items():
-                    if author not in totals[repo][commit_date]:
-                        totals[repo][commit_date][author] = 0
-                    totals[repo][commit_date][author] += counts
+            totals[repo] = []
+        for commit_date, file_authors in commit_file_authors:
+            commit_dates.append(commit_date)
+            commit_author_totals: Dict[str, int] = {}
+            for author_lines in file_authors.values():
+                for author, counts in author_lines.items():
+                    if author not in commit_author_totals:
+                        commit_author_totals[author] = int(0)
+                    commit_author_totals[author] += counts
+            totals[repo].append((commit_date, commit_author_totals))
+        print(f'len(totals[repo]): {len(totals[repo])}')
 
     # totals_dict: TotalsDict = {}
     # total_list: List[Tuple[int, str, float]]

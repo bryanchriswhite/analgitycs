@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Dict, Tuple, List
 
 FileAuthors = Dict[str, int]
@@ -7,10 +8,8 @@ AllRepoFileAuthors = Dict[str, RepoFileAuthors]
 
                                     #  [ author[ pos name count  pct ] ]
 RepoAuthorTotals = List[List[any]]  # List[List[dint, str, int, float]]
-            # isodate --v
-TotalList = List[Tuple[str, int, str, float]]
-                  # isodate --v
-TotalsDict = Dict[str, Tuple[str, TotalList]]
+TotalList = List[Tuple[date, int, str, float]]
+TotalsDict = Dict[str, TotalList]
 
 # test_dict: AllRepoFileAuthors = {
 #     'repo name': {
