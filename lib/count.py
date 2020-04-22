@@ -2,12 +2,14 @@ from concurrent.futures import ThreadPoolExecutor, wait
 import re
 
 from lib import git, my_types
+from lib.decorator import timed
 from lib.util import add_lines
 
 header_re = re.compile(r'\w{,40} \d+ (\d+)(:? (\d+))?')
 author_re = re.compile(r'author (.+)$')
 
 
+# @timed
 def commit(executor: ThreadPoolExecutor, repo_root, commit_date: str, filter_func=None, done=None):
     counts = {}
     files = git.ls_files(repo_root=repo_root)
@@ -24,6 +26,7 @@ def commit(executor: ThreadPoolExecutor, repo_root, commit_date: str, filter_fun
     return commit_date, counts
 
 
+# @timed
 def file(f, repo_root):
     counts: my_types.FileAuthors = {}
     last_author_header_ln = 1
