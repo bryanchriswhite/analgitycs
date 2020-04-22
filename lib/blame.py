@@ -39,7 +39,7 @@ class Blame:
         done = self.done()
         error = str(self.error)
         end = self.__end or time.perf_counter()
-        duration, totals = 0, []
+        authors, layers, totals = [], [], []
 
         if done:
             totals = self.totals()
@@ -53,6 +53,8 @@ class Blame:
                 'done': done,
                 'error': error,
             },
+            'authors': authors,
+            'layers': layers,
             'totals': totals
         }
 
@@ -64,7 +66,7 @@ class Blame:
         author_ys: Dict[str, List[int]] = {}
 
         # Build `commit_dates` and `author_ys`
-        for n, (commit_date, author_lines) in enumerate([f.result() for f in self.data]):
+        for n, (commit_date, author_lines) in enumerate(self.totals()):
             for author, y in author_ys.items():
                 if author not in author_lines.keys():
                     author_ys[author].append(0)
@@ -74,7 +76,18 @@ class Blame:
                 author_ys[author].append(lines)
 
         authors = list(author_ys.keys())
-        layers = np.vstack(list(author_ys.values()))
+        layers = list(author_ys.values())
+        # print()
+        # print()
+        # print()
+        # print(authors)
+        # print()
+        # print()
+        # print()
+        # print(layers)
+        # print()
+        # print()
+        # print()
         return authors, layers
 
 
@@ -131,23 +144,21 @@ class BlameManager():
 
     def blame(self, name, range_ref: str, commit_limit: int = 0, file_filter=None):
         if name not in self.__repo_stats:
-            err = error.ErrRepoMissing(name)
-            return err.response()
+            raise error.ErrRepoMissing(name)
 
         if name in self.__blames:
-            return self.__blames[name].status()
+            return self.__blames[name]
 
         rs = self.__repo_stats[name]
-        print(f'rs.blame: {rs.blame}')
         executor = ThreadPoolExecutor(1)
         f = executor.submit(rs.blame,
                             range_ref,
                             commit_limit,
                             file_filter=file_filter)
 
-        blame = Blame(f)
-        self.__blames[name] = blame
-        return blame.status()
+        _blame = Blame(f)
+        self.__blames[name] = _blame
+        return _blame
 
     def status(self, name: str):
         if name not in self.__repo_stats:

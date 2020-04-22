@@ -56,32 +56,39 @@ def handle_repo(name: str):
             return e.response()
 
     if request.data is None:
-        return {'error': 'no request params'}, status.HTTP_400_BAD_REQUEST
+        return {
+                   'error': 'no request params'
+               }, status.HTTP_400_BAD_REQUEST
 
     if request.method == 'POST':
         if name in repo_stats:
             return {'error': 'repo already exists'}, status.HTTP_409_CONFLICT
         root = request.data.pop('root')
         blame_manager.add(name, root, **request.data)
-        return {'msg': 'created'}, status.HTTP_201_CREATED
+        return {
+                   'msg': f'repo created',
+                   'name': name
+               }, status.HTTP_201_CREATED
 
     if request.method == 'PUT':
         range_ref = request.data.pop('range_ref')
         ext_whitelist = request.data.pop('ext_whitelist')
         filter_ext = util.filter_ext(ext_whitelist)
-        _status = blame_manager.blame(name, range_ref, file_filter=filter_ext, **request.data)
-        return _status, status.HTTP_202_ACCEPTED
+        blame = blame_manager.blame(name, range_ref, file_filter=filter_ext, **request.data)
+        return blame.status(), status.HTTP_202_ACCEPTED
 
     if request.method == 'DELETE':
         blame_manager.delete(name)
-        return 'ok', status.HTTP_200_OK
+        return {
+            'msg': f'deleted',
+            'name': name
+        }
 
-
-# @app.route('/repo/<string:name>/totals')
-# def repo_totals(name: str):
-#     if name in repo_stats:
-#         rs = repo_stats[name]
-#         return
+        # @app.route('/repo/<string:name>/totals')
+        # def repo_totals(name: str):
+        #     if name in repo_stats:
+        #         rs = repo_stats[name]
+        #         return
 
 if __name__ == '__main__':
     app.run()
