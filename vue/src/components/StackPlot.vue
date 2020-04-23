@@ -1,5 +1,5 @@
 <template>
-    <svg :viewBox="viewbox"></svg>
+    <svg class="stackplot" :viewBox="viewbox"></svg>
 </template>
 
 <script>
@@ -32,68 +32,31 @@
                     return
                 }
 
-                const stack = d3.layout.stack()
                 const area = d3.svg.area()
                     .x(d => d.x)
                     .y0(d => d.y0)
                     .y1(d => d.y + d.y0)
 
-
-                // const that = this
-                // p.then(res => {
-                //     if (typeof (res.error) != "undefined") {
-                //         console.error(res.error)
-                //         return
-                //     }
-                //     if (typeof (res.msg) != "undefined") {
-                //         console.log(res.msg)
-                //         return
-                //     }
-
-                const input_layers = layers.map(layer => {
-                    return layer.map((n, i) => {
-                        return {x: i * 50, y: n, y0: 0,}
-                    })
-                })
-                const stacked_layers = stack(input_layers)
-                const xMax = stacked_layers[0].length
-                const yMax = d3.max(stacked_layers[stacked_layers.length - 1].map(n => n.y + n.y0))
-
-                this.xMax = xMax
-                this.yMax = yMax
-                // this.setViewBox({xMax, yMax})
-
                 d3.select('svg')
-                    // .attr('viewBox', `0 0 ${xMax} ${yMax}`)
                     .selectAll('path')
-                    .data(stacked_layers)
+                    .data(layers)
                     .enter().append('path')
-                    .attr('class', (_, i) =>
-                        `color-${i % this.color_count}`)
-                    // .attr('fill', (_, i) => colors[i % colors.length])
+                    .attr('class', (_, i) => `color-${i % this.color_count}`)
                     .attr('stroke', 'none')
-                    .attr('d', (d) => area(d))
-                // })
+                    .attr('d', (layer) => area(layer))
             }
         }
     }
 </script>
 
 <style lang="stylus">
-    // TODO: delete!
-    body
-        background-colorred;
-
     for num in 0..9%
-        {'.color-' + num}
+        svg.stackplot path{'.color-' + num}
             fill hsl(num * 15, 60%, 50%)
 
 </style>
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="stylus">
-    #d3-debug
-        display none
-
     svg
         width 100vw
         height 100vh

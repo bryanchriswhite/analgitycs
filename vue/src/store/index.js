@@ -47,7 +47,7 @@ export default new Vuex.Store({
             const yMax = d3.max(stacked_layers[stacked_layers.length - 1].map(n => n.y + n.y0));
             const stackplot = {stacked_layers, xMax, yMax}
             localStorage.setItem('stackplot', JSON.stringify(stackplot));
-            state.layers = layers;
+            state.layers = stacked_layers;
             state.xMax = xMax;
             state.yMax = yMax;
         }
