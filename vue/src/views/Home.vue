@@ -7,14 +7,18 @@
                 {{option.text}}
             </option>
         </select>
-        <StackPlot msg="Welcome to Your Vue.js App"/>
+        <StackPlot :layers="layers"/>
     </div>
 </template>
 
 <script>
-    import {SET_COLOR} from '@/store/actions'
+    import {SET_COLOR, SET_LAYERS} from '@/store/actions'
     import StackPlot from '@/components/StackPlot.vue'
     import ThemedBG from '@/components/ThemedBG.vue'
+    import * as fetch from 'd3-fetch';
+
+    const p = fetch.json('http://localhost:5000/repo/storj', {mode: 'cors'})
+
 
     export default {
         name: 'Home',
@@ -36,7 +40,22 @@
                 set(value) {
                     this.$store.commit(SET_COLOR, value)
                 }
+            },
+            layers: {
+                get() {
+                    return this.$store.state.layers
+                },
+                set(value) {
+                    this.$store.commit(SET_LAYERS, value)
+                }
             }
         },
+        beforeCreate() {
+            const that = this
+            p.then(({layers}) => {
+                console.log(layers)
+                that.layers = layers
+            })
+        }
     }
 </script>
