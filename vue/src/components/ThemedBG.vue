@@ -11,14 +11,6 @@
                 return `background-color: ${this.$props.color}`
             }
         },
-        mounted() {
-            console.log(this.$props)
-        }
-        // computed: {
-        //     style() {
-        //         return `background-color: ${this.color}`
-        //     }
-        // }
     }
 </script>
 

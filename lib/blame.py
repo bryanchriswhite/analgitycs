@@ -3,8 +3,6 @@ from datetime import datetime
 from typing import List, Dict
 import time
 
-import numpy as np
-
 from lib import error
 from lib.repo import RepoStat
 from lib.decorator import timed
@@ -25,12 +23,8 @@ class Blame:
         if error is not None:
             self.error = error
             return
-        # self.data = self.__unwrap_results(f)
-        print(f.result())
-        self.data = f.result()
 
-    # def __unwrap_results(self, f: Future):
-    #     return [{author:total} for ]
+        self.data = f.result()
 
     def done(self):
         return self.__f.done()
@@ -60,12 +54,10 @@ class Blame:
 
     def author_layers(self):
         if not self.__f.done() or self.data is None:
-            return []
+            return {}
 
-        # commit_dates = [tup[0] for tup in self.data]
         author_ys: Dict[str, List[int]] = {}
 
-        # Build `commit_dates` and `author_ys`
         for n, (commit_date, author_lines) in enumerate(self.totals()):
             for author, y in author_ys.items():
                 if author not in author_lines.keys():
@@ -77,17 +69,6 @@ class Blame:
 
         authors = list(author_ys.keys())
         layers = list(author_ys.values())
-        # print()
-        # print()
-        # print()
-        # print(authors)
-        # print()
-        # print()
-        # print()
-        # print(layers)
-        # print()
-        # print()
-        # print()
         return authors, layers
 
 
@@ -125,13 +106,9 @@ class BlameManager():
             max_workers=None,
             max_worktrees=None,
             file_filter=None):
-        # print(f'root {root}')
-        # print(f'max_workers {max_workers}')
-        # print(f'max_worktrees {max_worktrees}')
 
         if name in self.__repo_stats:
             return error.ErrRepoExists(name)
-            # return RuntimeError(f)
 
         rs = RepoStat(root,
                       max_workers=max_workers,

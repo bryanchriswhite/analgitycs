@@ -16,7 +16,7 @@
         },
         computed: {
             viewbox() {
-                return `0 0 ${this.$store.state.xMax} ${this.$store.state.yMax}`
+                return `0 0 ${this.$store.state.stackplot.xMax} ${this.$store.state.stackplot.yMax}`
             }
         },
         mounted() {
