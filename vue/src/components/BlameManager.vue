@@ -1,7 +1,7 @@
 <template>
-    <section>
+    <section id="blame">
         <h2>Blame Manager</h2>
-        <section>
+        <section id="blame_params">
             <input name="range_ref"
                    type="text"
                    placeholder="range_ref"
@@ -12,27 +12,38 @@
                    placeholder="commit limit"
                    @change="setCommitLimit"
                    :value="commit_limit"/>
-            <input name="commit_offset"
+            <input name="ext_whitelist"
                    type="text"
-                   placeholder="commit offset"
-                   @change="setCommitOffset"
-                   :value="commit_offset"/>
+                   placeholder="file ext whitelist"
+                   @change="SET_EXT_WLIST()"
+                   :value="ext_whitelist"/>
+            <!--            <input name="commit_offset"-->
+            <!--                   type="text"-->
+            <!--                   placeholder="commit offset"-->
+            <!--                   @change="setCommitOffset"-->
+            <!--                   :value="commit_offset"/>-->
         </section>
-        <section v-for="repo in repos" :key=repo.name>
-            <button @click="blame(repo.name)">Blame</button>
-            <span>{{repo.name}}</span>
-            <button @click="delete_repo(repo.name)">x</button>
-        </section>
-        <section>
+        <section id="repo_params">
             <input name="new_repo_name"
                    type="text"
                    placeholder="name"
                    v-model="new_repo_name"/>
-            <input name="new_repo_url"
+            <!--            <input name="new_repo_url"-->
+            <!--                   type="text"-->
+            <!--                   placeholder="url"-->
+            <!--                   v-model="new_repo_url"/>-->
+            <input name="new_repo_path"
                    type="text"
-                   placeholder="url"
-                   v-model="new_repo_url"/>
+                   placeholder="path"
+                   v-model="new_repo_path"/>
             <button @click="add_repo">+</button>
+        </section>
+        <section id="repos">
+            <section v-for="repo in repos" :key=repo.name>
+                <button @click="blame_repo(repo.name)">Blame</button>
+                <span>{{repo.name}}</span>
+                <button @click="delete_repo(repo.name)">x</button>
+            </section>
         </section>
     </section>
 </template>
@@ -44,26 +55,17 @@
 </style>
 
 <script>
-    import {mapState} from 'vuex';
-    import * as _ from 'lodash';
-    import * as fetch from 'd3-fetch';
+    import {mapState, mapActions} from 'vuex';
 
-    import {SET_LAYERS} from '@/store/stackplot'
     import {
-        SET_REPOS,
+        ADD_REPO,
+        DEL_REPO,
         SET_RANGE_REF,
         SET_COMMIT_LIMIT,
-        SET_COMMIT_OFFSET
+        SET_COMMIT_OFFSET,
+        SET_EXT_WLIST,
+        BLAME_REPO
     } from '@/store/blame_manager'
-
-    const baseUrl = 'http://localhost:5000/repo/';
-    const fetchBase = {
-        mode: 'cors',
-        headers: [['content-type', 'application/json']]
-    };
-    // fetch.json('http://localhost:5000/repo/storj', {mode: 'cors'}).then()
-
-    const ext_whitelist = [".go", ".proto", ".c", ".h", ".sh", ".md", ".xml", ".wixproj", ".wsx", ".cs"]
 
     export default {
         name: 'BlameManager',
@@ -71,14 +73,15 @@
         data: () => ({
             new_repo_name: '',
             new_repo_url: '',
-            // repos: []
+            new_repo_path: '',
         }),
         // TODO: use constant!
         computed: mapState('blame_manager', [
             'repos',
             'range_ref',
             'commit_limit',
-            'commit_offset'
+            'commit_offset',
+            'ext_whitelist',
         ]),
         methods: {
             setRangeRef(evt) {
@@ -92,48 +95,25 @@
             },
             add_repo() {
                 const {repos} = this.$store.state.blame_manager
-                const {new_repo_name: name, new_repo_url: url} = this
-                this.$store.commit('blame_manager/' + SET_REPOS, [...repos, {name, url}])
+                const {
+                    new_repo_name: name,
+                    new_repo_path: path,
+                    new_repo_url: url,
+                } = this
+                this.$store.commit('blame_manager/' + ADD_REPO, {...repos, [name]: {name, path, url}})
                 this.new_repo_name = ''
+                this.new_repo_path = ''
                 this.new_repo_url = ''
             },
             delete_repo(name) {
-                const {repos} = this.$store.state.blame_manager
-                const i = _.findIndex(repos, e => e.name === name)
-                if (i < 0) {
-                    console.error(`repo ${name} not added`)
-                    return
-                }
 
-                repos.splice(i, 1)
-                this.$store.commit('blame_manager/' + SET_REPOS, repos)
+                this.$store.commit('blame_manager/' + DEL_REPO, name)
             },
             // TODO: make an action instead!
-            blame(name) {
-                const that = this
-                fetch.json(baseUrl + name,
-                    {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            range_ref: that.range_ref,
-                            commit_limit: that.commit_limit,
-                            // commit_offset: that.commit_offset,
-                            ext_whitelist,
-                        }),
-                        ...fetchBase
-                    })
-                    // TODO: something else
-                    .then(function (res) {
-                        console.log('blame success!')
-                        console.log(res)
-                        that.$store.commit('stackplot/' + SET_LAYERS, res.layers)
-                    }, function (error) {
-                        // TODO: better error handling!
-                        console.error('blame error!')
-                        console.error(error)
-                    })
-            },
-            // ...mapActions({})
+            ...mapActions('blame_manager', [
+                BLAME_REPO,
+                SET_EXT_WLIST,
+            ])
         }
     }
 </script>

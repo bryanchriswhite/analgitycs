@@ -7,9 +7,10 @@ from lib import error
 from lib.repo import RepoStat
 from lib.decorator import timed
 
+
 class Blame:
     def __init__(self, f: Future):
-        self.__start = time.perf_counter()
+        self.__start = datetime.utcnow()
         self.__f = f
         self.data = None
         self.error = None
@@ -32,18 +33,15 @@ class Blame:
     def status(self):
         done = self.done()
         error = str(self.error)
-        end = self.__end or time.perf_counter()
         authors, layers, totals = [], [], []
 
         if done:
             totals = self.totals()
             authors, layers = self.author_layers()
 
-        duration = round(end - self.__start, 2)
-
         return {
             'status': {
-                'running': f'{round(duration, 2)}s',
+                'started': datetime.timestamp(self.__start),
                 'done': done,
                 'error': error,
             },
@@ -71,7 +69,6 @@ class Blame:
         layers = list(author_ys.values())
         return authors, layers
 
-
     # TODO: refactor/cleanup
     @timed
     def totals(self):
@@ -97,36 +94,29 @@ class Blame:
         return totals
 
 
-class BlameManager():
+class BlameManager:
     def __init__(self):
-        self.__repo_stats = {}
-        self.__blames = {}
+        self.repo_stats = {}
+        self.blames = {}
 
-    def add(self, name, root,
-            max_workers=None,
-            max_worktrees=None,
-            file_filter=None):
+    def add(self, rs: RepoStat):
+        if rs.name in self.repo_stats:
+            return error.ErrRepoExists(rs.name)
 
-        if name in self.__repo_stats:
-            return error.ErrRepoExists(name)
-
-        rs = RepoStat(root,
-                      max_workers=max_workers,
-                      max_worktrees=max_worktrees)
-        self.__repo_stats[name] = rs
+        self.repo_stats[rs.name] = rs
         return rs
 
     def delete(self, name):
-        self.__blames.pop(name, None)
+        self.blames.pop(name, None)
 
     def blame(self, name, range_ref: str, commit_limit: int = 0, file_filter=None):
-        if name not in self.__repo_stats:
+        if name not in self.repo_stats:
             raise error.ErrRepoMissing(name)
 
-        if name in self.__blames:
-            return self.__blames[name]
+        if name in self.blames:
+            return self.blames[name]
 
-        rs = self.__repo_stats[name]
+        rs = self.repo_stats[name]
         executor = ThreadPoolExecutor(1)
         f = executor.submit(rs.blame,
                             range_ref,
@@ -134,12 +124,12 @@ class BlameManager():
                             file_filter=file_filter)
 
         _blame = Blame(f)
-        self.__blames[name] = _blame
+        self.blames[name] = _blame
         return _blame
 
     def status(self, name: str):
-        if name not in self.__repo_stats:
+        if name not in self.repo_stats:
             raise error.ErrRepoMissing(name)
-        if name not in self.__blames:
+        if name not in self.blames:
             raise error.ErrRepoNotBlamed(name)
-        return self.__blames[name].status()
+        return self.blames[name].status()

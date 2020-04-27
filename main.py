@@ -63,8 +63,12 @@ def handle_repo(name: str):
     if request.method == 'POST':
         if name in repo_stats:
             return {'error': 'repo already exists'}, status.HTTP_409_CONFLICT
-        root = request.data.pop('root')
-        blame_manager.add(name, root, **request.data)
+        name, path = [request.data.pop(k) for k in ('name', 'path')]
+        rs = RepoStat(name, path, **request.data)
+        print(rs.name)
+        print(rs.path)
+        print(rs.url)
+        blame_manager.add(rs)
         return {
                    'msg': f'repo created',
                    'name': name
