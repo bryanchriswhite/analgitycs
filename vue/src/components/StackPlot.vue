@@ -8,13 +8,53 @@
         </section>
         <section class="legend">
             <ul>
-                <li v-for="author in authors" :key="author">
-                    {{author}}
+                <li v-for="(author, i) in authors" :key="author">
+                    <i :class="colorClass(i)"></i>
+                    <span>{{author}}</span>
                 </li>
             </ul>
         </section>
     </section>
 </template>
+
+<style lang="stylus">
+    for num in 0..9%
+        .stackplot path{'.color-' + num}
+            fill hsl(num * 15, 60%, 50%)
+
+        .legend i{'.color-' + num}
+            background-color hsl(num * 15, 60%, 50%)
+
+</style>
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped lang="stylus">
+    svg.stackplot
+        width 100vw
+        height 100vh
+        transform scaleY(-1)
+
+    .legend
+        position fixed
+        left 25px
+        bottom 25px
+
+        ul
+            list-style none
+
+            li
+                text-align left
+                margin 0 0 5px 0
+
+                i
+                    display inline-block
+                    width 10px
+                    height 10px
+                    margin-right 5px
+
+    /*width 1000px*/
+    /*height 750px*/
+    /*border 1px solid red*/
+</style>
 
 <script>
     import * as d3 from 'd3';
@@ -40,6 +80,9 @@
             this.drawStackPlot()
         },
         methods: {
+            colorClass(i) {
+                return `color-${i % this.color_count}`
+            },
             drawStackPlot() {
                 const layers = this.$props.layers
                 if (!layers || layers.length === 0) {
@@ -62,35 +105,3 @@
         }
     }
 </script>
-
-<style lang="stylus">
-    for num in 0..9%
-        svg.stackplot path{'.color-' + num}
-            fill hsl(num * 15, 60%, 50%)
-
-</style>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped lang="stylus">
-    svg.stackplot
-        width 100vw
-        height 100vh
-        transform scaleY(-1)
-
-    /*width 1000px*/
-    /*height 750px*/
-    /*border 1px solid red*/
-
-    h3
-        margin 40px 0 0
-
-    ul
-        list-style-type none
-        padding 0
-
-    li
-        display inline-block
-        margin 0 10px
-
-    a
-        color #42b983
-</style>

@@ -1,7 +1,7 @@
 import * as fetch from 'd3-fetch';
 
 import * as ls from "./localstorage";
-import {SET_LAYERS} from './stackplot'
+import {SET_LAYERS, SET_AUTHORS} from './stackplot'
 import * as _ from "lodash";
 
 // Mutations
@@ -93,7 +93,11 @@ export const actions = {
         const putSuccess = (result) => {
             console.log('blame success!')
             console.log(result)
+
+            if (!result.status.done) return
+
             // that.$store.commit('stackplot/' + SET_LAYERS, result.layers)
+            commit('stackplot/' + SET_AUTHORS, result.authors, {root: true})
             commit('stackplot/' + SET_LAYERS, result.layers, {root: true})
             commit(SET_BLAME, {name, params, result})
         }
