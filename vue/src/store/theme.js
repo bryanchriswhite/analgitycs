@@ -10,8 +10,8 @@ const initialState = {
 };
 
 export const mutations = {
-    [SET_COLOR](state, color) {
-        state.color = color;
+    [SET_COLOR](state, {target: {value}}) {
+        state.color = value;
         save(state);
     }
 };

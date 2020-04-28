@@ -1,11 +1,11 @@
 <template>
-    <section id="blame">
+    <section class="blame">
         <h2>Blame Manager</h2>
-        <section id="blame_params">
+        <section class="blame_params">
             <input name="range_ref"
                    type="text"
                    placeholder="range_ref"
-                   @change="setRangeRef"
+                   @change="set_range_ref"
                    :value="range_ref"/>
             <input name="commit_limit"
                    type="text"
@@ -15,7 +15,7 @@
             <input name="ext_whitelist"
                    type="text"
                    placeholder="file ext whitelist"
-                   @change="SET_EXT_WLIST()"
+                   @change="set_ext_whitelist"
                    :value="ext_whitelist"/>
             <!--            <input name="commit_offset"-->
             <!--                   type="text"-->
@@ -23,7 +23,7 @@
             <!--                   @change="setCommitOffset"-->
             <!--                   :value="commit_offset"/>-->
         </section>
-        <section id="repo_params">
+        <section class="repo_params">
             <input name="new_repo_name"
                    type="text"
                    placeholder="name"
@@ -38,7 +38,7 @@
                    v-model="new_repo_path"/>
             <button @click="add_repo">+</button>
         </section>
-        <section id="repos">
+        <section class="repos">
             <section v-for="repo in repos" :key=repo.name>
                 <button @click="blame_repo(repo.name)">Blame</button>
                 <span>{{repo.name}}</span>
@@ -55,7 +55,7 @@
 </style>
 
 <script>
-    import {mapState, mapActions} from 'vuex';
+    import {mapState, mapMutations, mapActions} from 'vuex';
 
     import {
         ADD_REPO,
@@ -84,9 +84,9 @@
             'ext_whitelist',
         ]),
         methods: {
-            setRangeRef(evt) {
-                this.$store.commit('blame_manager/' + SET_RANGE_REF, evt.target.value)
-            },
+            // setRangeRef(evt) {
+            //     this.$store.commit('blame_manager/' + SET_RANGE_REF, evt.target.value)
+            // },
             setCommitLimit(evt) {
                 this.$store.commit('blame_manager/' + SET_COMMIT_LIMIT, evt.target.value)
             },
@@ -110,9 +110,12 @@
                 this.$store.commit('blame_manager/' + DEL_REPO, name)
             },
             // TODO: make an action instead!
+            ...mapMutations('blame_manager', [
+                SET_RANGE_REF,
+                SET_EXT_WLIST,
+            ]),
             ...mapActions('blame_manager', [
                 BLAME_REPO,
-                SET_EXT_WLIST,
             ])
         }
     }

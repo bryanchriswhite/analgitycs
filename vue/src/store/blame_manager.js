@@ -22,6 +22,12 @@ const {save, load} = ls.factory(LOCAL_STORAGE_KEY)
 const defaultCommitLimit = 10;
 const defaultRangeRef = 'master';
 
+const baseUrl = 'http://localhost:5000/repo/';
+const fetchBase = {
+    mode: 'cors',
+    headers: [['content-type', 'application/json']]
+};
+
 let initialState = {
     range_ref: defaultRangeRef,
     commit_limit: defaultCommitLimit,
@@ -44,9 +50,9 @@ export const mutations = {
 
         state.repos.splice(i, 1)
     },
-    [SET_RANGE_REF](state, range_ref) {
-        console.log('SET_RANGE_REF called')
-        state.range_ref = range_ref;
+    [SET_RANGE_REF](state, {target: {value}}) {
+        // console.log('SET_RANGE_REF called')
+        state.range_ref = value;
         save(state)
     },
     [SET_COMMIT_LIMIT](state, commit_limit) {
@@ -55,6 +61,10 @@ export const mutations = {
     },
     [SET_COMMIT_OFFSET](state, commit_offset) {
         state.commit_offset = commit_offset
+        save(state)
+    },
+    [SET_EXT_WLIST](state, {target: {value}}) {
+        state.ext_whitelist = value
         save(state)
     },
     [SET_BLAME](state, {name, ...payload}) {
@@ -67,33 +77,28 @@ export const mutations = {
         }
 
         state.blames[name].push(payload)
+        save(state)
     }
 };
 
-const baseUrl = 'http://localhost:5000/repo/';
-const fetchBase = {
-    mode: 'cors',
-    headers: [['content-type', 'application/json']]
-};
-// fetch.json('http://localhost:5000/repo/storj', {mode: 'cors'}).then()
-
 export const actions = {
     [BLAME_REPO]({commit, state: {range_ref, commit_limit, ext_whitelist}}, name) {
-        const params = {
-            range_ref,
-            commit_limit,
-            ext_whitelist
-        };
+        const params = {range_ref, commit_limit, ext_whitelist};
 
-        console.log(state.repos[name])
-        const {path, url} = state.repos[name]
-        const repoParams = {name, path, url}
-        // const repoParams = {}
-        fetch.json(baseUrl + name, {
-            method: 'POST',
-            body: JSON.stringify(repoParams),
-            ...fetchBase
-        }).then(function () {
+        const logError = (error) => {
+            // TODO: error handling!
+            console.error(error)
+        }
+
+        const putSuccess = (result) => {
+            console.log('blame success!')
+            console.log(result)
+            // that.$store.commit('stackplot/' + SET_LAYERS, result.layers)
+            commit('stackplot/' + SET_LAYERS, result.layers, {root: true})
+            commit(SET_BLAME, {name, params, result})
+        }
+
+        const postSuccess = () => {
             fetch.json(baseUrl + name,
                 {
                     method: 'PUT',
@@ -101,21 +106,25 @@ export const actions = {
                     ...fetchBase
                 })
                 // TODO: something else
-                .then(function (result) {
-                    console.log('blame success!')
-                    console.log(result)
-                    // that.$store.commit('stackplot/' + SET_LAYERS, result.layers)
-                    commit('stackplot/' + SET_LAYERS, result.layers, {root: true})
-                    commit(SET_BLAME, {name, params, result})
-                }, function (error) {
-                    // TODO: error handling!
-                    console.error('blame error!')
-                    console.error(error)
-                })
-        }, function (error) {
-            console.error('repo error!')
-            console.error(error)
-        })
+                .then(putSuccess, logError)
+        }
+
+        // const deleteSuccess = () => {
+        //     const {path, url} = state.repos[name]
+        //     const repoParams = {name, path, url}
+        //
+        //     fetch.json(baseUrl + name, {
+        //         method: 'POST',
+        //         body: JSON.stringify(repoParams),
+        //         ...fetchBase
+        //     }).then(postSuccess, logError)
+        // }
+
+        postSuccess();
+        // fetch.json(baseUrl + name, {
+        //     method: 'DELETE',
+        //     ...fetchBase
+        // }).then(deleteSuccess, logError)
     },
 }
 

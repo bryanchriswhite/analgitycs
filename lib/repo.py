@@ -13,6 +13,8 @@ commit_re = re.compile(r'^(\w+)\s+\(.*,\s+' + date_group_re + r'\)$')
 default_max_worktrees = 20
 default_max_workers = 15
 default_commit_limit = 100
+
+
 # default_timeout = 60
 
 
@@ -28,7 +30,9 @@ class RepoStat:
         self.max_worktrees = max_worktrees
 
     @timed
-    def blame(self, range_ref: str, commit_limit=default_commit_limit, file_filter=None):
+    def blame(self, range_ref: str, commit_limit: int = default_commit_limit, file_filter=None):
+        commit_limit = int(commit_limit)
+
         # TODO: shutdown executors
         worktree_executor = ThreadPoolExecutor(self.max_worktrees)
         commit_fs = self.commits(worktree_executor, range_ref, limit=commit_limit)

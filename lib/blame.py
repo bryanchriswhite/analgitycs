@@ -23,7 +23,7 @@ class Blame:
         error = f.exception()
         if error is not None:
             self.error = error
-            return
+            raise error
 
         self.data = f.result()
 
@@ -52,7 +52,7 @@ class Blame:
 
     def author_layers(self):
         if not self.__f.done() or self.data is None:
-            return {}
+            return [], []
 
         author_ys: Dict[str, List[int]] = {}
 
@@ -114,6 +114,9 @@ class BlameManager:
             raise error.ErrRepoMissing(name)
 
         if name in self.blames:
+            # status = self.blames[name].status()
+            # if not status['status']['done']:
+            #     return status
             return self.blames[name]
 
         rs = self.repo_stats[name]
