@@ -2,16 +2,18 @@ import * as d3 from "d3";
 
 import * as ls from "./localstorage";
 
-export const SET_LAYERS = 'set_layers'
-export const SET_AUTHORS = 'set_authors'
+export const SET_LAYERS = 'set_layers';
+export const SET_AUTHORS = 'set_authors';
+export const SET_ACTIVE_LAYER = 'set_active_layer';
 
 const LOCAL_STORAGE_KEY = 'stackplot';
-const {save, load} = ls.factory(LOCAL_STORAGE_KEY)
+const {save, load} = ls.factory(LOCAL_STORAGE_KEY);
 
 let initialState = {
     xMax: 0,
     yMax: 0,
     layers: [],
+    active_layer: null,
 };
 
 export const mutations = {
@@ -31,7 +33,10 @@ export const mutations = {
     },
     [SET_AUTHORS](state, authors) {
         state.authors = authors
-    }
+    },
+    [SET_ACTIVE_LAYER](state, layer_index) {
+        state.active_layer = layer_index;
+    },
 };
 
 export const state = load(initialState);

@@ -48,11 +48,9 @@ def handle_repo(name: str):
         try:
             _status = blame_manager.status(name)
             if _status is None:
-                # TODO: 400
                 return {'msg': f'repo {name} hasn\'t been blamed yet'}
             return _status
         except error.ResponseError as e:
-            print(f'excepting error!')
             return e.response()
 
     if request.data is None:
@@ -63,7 +61,7 @@ def handle_repo(name: str):
     if request.method == 'POST':
         if name in repo_stats:
             return {'error': 'repo already exists'}, status.HTTP_409_CONFLICT
-        name, path = [request.data.pop(k) for k in ('name', 'path')]
+        path = request.data.pop('path')
         rs = RepoStat(name, path, **request.data)
         print(rs.name)
         print(rs.path)
@@ -76,10 +74,14 @@ def handle_repo(name: str):
 
     if request.method == 'PUT':
         range_ref = request.data.pop('range_ref')
-        ext_whitelist = request.data.pop('ext_whitelist')
-        filter_ext = util.filter_ext(ext_whitelist)
-        blame = blame_manager.blame(name, range_ref, file_filter=filter_ext, **request.data)
-        return blame.status(), status.HTTP_202_ACCEPTED
+        # ext_whitelist = request.data.pop('ext_whitelist')
+        # filter_ext = util.filter_ext(ext_whitelist)
+        blame = blame_manager.blame(name, range_ref, **request.data)
+        _status = blame.status()
+        if not _status['status']['done']:
+            return _status, status.HTTP_202_ACCEPTED
+
+        return _status
 
     if request.method == 'DELETE':
         blame_manager.delete(name)
@@ -87,12 +89,6 @@ def handle_repo(name: str):
             'msg': f'deleted',
             'name': name
         }
-
-        # @app.route('/repo/<string:name>/totals')
-        # def repo_totals(name: str):
-        #     if name in repo_stats:
-        #         rs = repo_stats[name]
-        #         return
 
 if __name__ == '__main__':
     app.run()

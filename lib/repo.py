@@ -1,7 +1,8 @@
-from concurrent.futures import Future, ThreadPoolExecutor, wait, ALL_COMPLETED
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor, wait, ALL_COMPLETED
 from dateutil.parser import isoparse
-from typing import List
+from multiprocessing import cpu_count
 import re
+from typing import List
 
 from lib import git, count
 from lib.worktree import Worktree
@@ -29,26 +30,26 @@ class RepoStat:
         self.max_workers = max_workers
         self.max_worktrees = max_worktrees
 
-    @timed
-    def blame(self, range_ref: str, commit_limit: int = default_commit_limit, file_filter=None):
+    def blame(self, range_ref: str, commit_limit: int = default_commit_limit, ext_whitelist=None):
         commit_limit = int(commit_limit)
 
         # TODO: shutdown executors
-        worktree_executor = ThreadPoolExecutor(self.max_worktrees)
-        commit_fs = self.commits(worktree_executor, range_ref, limit=commit_limit)
+        commit_log_pool = ThreadPoolExecutor(self.max_workers)
+        commit_fs = self.commits(commit_log_pool, range_ref, limit=commit_limit)
         commit_count_fs: List[Future] = []
         wait(commit_fs, return_when=ALL_COMPLETED)
+
+        # TODO:
+        process_exec = ProcessPoolExecutor(cpu_count())
+
         commits = [f.result() for f in commit_fs if f.result() is not None]
         for commit_hash, commit_date in commits:
-            count_executor = ThreadPoolExecutor(self.max_workers)
             wt = Worktree(self.path, commit_hash, commit_hash)
-            wt.add()
-            future = worktree_executor.submit(count.commit,
-                                              count_executor,
-                                              wt.path(),
-                                              commit_date,
-                                              file_filter,
-                                              done=wt.remove)
+            future = process_exec.submit(count.commit,
+                                         self.max_workers,
+                                         wt,
+                                         commit_date,
+                                         ext_whitelist)
             commit_count_fs.append(future)
         return commit_count_fs
 
@@ -72,4 +73,6 @@ class RepoStat:
 
             return commit_hash, isoparse(commit_date)
 
+        # TODO: try
+        # return executor.map(log_lines, parse_line)
         return [executor.submit(parse_line, l) for l in log_lines]

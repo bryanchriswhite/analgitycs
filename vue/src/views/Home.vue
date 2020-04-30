@@ -1,15 +1,15 @@
 <template>
     <div class="home">
         <ThemedBG :color="bgColor"/>
-        <label>Theme:&nbsp;
-            <select name="theme"
-                    @change="set_color"
-                    :value="bgColor">
-                <option v-for="option in options" :key="option.value" :value="option.value">
-                    {{option.text}}
-                </option>
-            </select>
-        </label>
+<!--        <label>Theme:&nbsp;-->
+<!--            <select name="theme"-->
+<!--                    @change="set_color"-->
+<!--                    :value="bgColor">-->
+<!--                <option v-for="option in options" :key="option.value" :value="option.value">-->
+<!--                    {{option.text}}-->
+<!--                </option>-->
+<!--            </select>-->
+<!--        </label>-->
         <blame-manager/>
         <StackPlot :layers="layers" :authors="authors"/>
     </div>

@@ -1,16 +1,28 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 import re
 
-from lib import git, my_types
+from lib import git, my_types, util
 from lib.decorator import timed
 from lib.util import add_lines
+from lib.worktree import Worktree
 
 header_re = re.compile(r'\w{,40} \d+ (\d+)(:? (\d+))?')
 author_re = re.compile(r'author (.+)$')
 
 
 # @timed
-def commit(executor: ThreadPoolExecutor, repo_root, commit_date: str, filter_func=None, done=None):
+def commit(max_workers: int,
+           wt: Worktree,
+           commit_date: str,
+           ext_whitelist=None):
+    wt.add()
+    repo_root = wt.path()
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    filter_func = None
+    if ext_whitelist is not None:
+        filter_func = util.filter_ext(ext_whitelist)
+
     counts = {}
     files = git.ls_files(repo_root=repo_root)
     for f in files:
@@ -18,10 +30,9 @@ def commit(executor: ThreadPoolExecutor, repo_root, commit_date: str, filter_fun
             continue
         counts[f]: my_types.FileAuthors = executor.submit(file, f, repo_root)
 
-    def _done():
-        wait([v for v in counts.values()])
-        done()
-    executor.submit(_done)
+    wait([v for v in counts.values()])
+    counts = {k:f.result() for k, f in counts.items()}
+    wt.remove()
     # TODO: find a better way to get commit_date
     return commit_date, counts
 

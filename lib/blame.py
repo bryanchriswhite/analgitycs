@@ -10,7 +10,7 @@ from lib.decorator import timed
 
 class Blame:
     def __init__(self, f: Future):
-        self.__start = datetime.utcnow()
+        self.__start = time.perf_counter()
         self.__f = f
         self.data = None
         self.error = None
@@ -18,12 +18,13 @@ class Blame:
 
         f.add_done_callback(self.__on_done)
 
+    @timed
     def __on_done(self, f):
         self.__end = time.perf_counter()
         error = f.exception()
         if error is not None:
             self.error = error
-            raise error
+            raise RuntimeError(error)
 
         self.data = f.result()
 
@@ -41,7 +42,8 @@ class Blame:
 
         return {
             'status': {
-                'started': datetime.timestamp(self.__start),
+                'start': self.__start,
+                'end': self.__end,
                 'done': done,
                 'error': error,
             },
@@ -50,6 +52,7 @@ class Blame:
             'totals': totals
         }
 
+    @timed
     def author_layers(self):
         if not self.__f.done() or self.data is None:
             return [], []
@@ -77,7 +80,7 @@ class Blame:
 
         commit_authors = []
         for commit_date, file_authors in [f.result() for f in self.data]:
-            new_results = {file: f.result() for (file, f) in file_authors.items() if f is not None}
+            new_results = {k:v for k, v in file_authors.items() if v is not None}
             commit_authors.append((commit_date, new_results))
 
         commit_dates: List[datetime] = []
@@ -109,7 +112,7 @@ class BlameManager:
     def delete(self, name):
         self.blames.pop(name, None)
 
-    def blame(self, name, range_ref: str, commit_limit: int = 0, file_filter=None):
+    def blame(self, name, range_ref: str, commit_limit: int = 0, ext_whitelist=None):
         if name not in self.repo_stats:
             raise error.ErrRepoMissing(name)
 
@@ -124,8 +127,9 @@ class BlameManager:
         f = executor.submit(rs.blame,
                             range_ref,
                             commit_limit,
-                            file_filter=file_filter)
+                            ext_whitelist=ext_whitelist)
 
+        # f.add_done_callback(lambda _: executor.shutdown())
         _blame = Blame(f)
         self.blames[name] = _blame
         return _blame
