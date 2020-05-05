@@ -7,7 +7,7 @@ export const SET_AUTHORS = 'set_authors';
 export const SET_ACTIVE_LAYER = 'set_active_layer';
 
 const LOCAL_STORAGE_KEY = 'stackplot';
-const {save, load} = ls.factory(LOCAL_STORAGE_KEY);
+const {load} = ls.factory(LOCAL_STORAGE_KEY);
 
 let initialState = {
     xMax: 0,
@@ -20,7 +20,7 @@ export const mutations = {
     [SET_LAYERS](state, layers) {
         const input_layers = layers.map(layer => {
             return layer.map((n, i) => {
-                return {x: i * 50, y: n, y0: 0,}
+                return {x: i, y: n, y0: 0,}
             })
         })
         state.layers = d3.layout.stack()(input_layers);
@@ -29,7 +29,7 @@ export const mutations = {
 
         state.xMax = state.layers[0].length;
         state.yMax = d3.max(state.layers[state.layers.length - 1].map(n => n.y + n.y0));
-        save(state);
+        // save(state);
     },
     [SET_AUTHORS](state, authors) {
         state.authors = authors

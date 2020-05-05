@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib import util, error
 from lib.blame import BlameManager
 from lib.repo import RepoStat
+from lib.schema import schema
 
 app = FlaskAPI(__name__)
 app.config['DEFAULT_RENDERERS'] = [
@@ -30,6 +31,16 @@ ext_whitelist = (
 )
 
 blame_manager = BlameManager()
+
+
+@app.route('/graphql')
+def handle_graphql():
+    result = schema.execute(request.data)
+
+    return {
+        'request.data': request.data,
+        'result': result
+    }
 
 
 @app.route('/repos')
@@ -90,5 +101,6 @@ def handle_repo(name: str):
             'name': name
         }
 
+
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app)

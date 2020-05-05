@@ -81,9 +81,9 @@
         margin 5px
 
     .blame-manager
-        position absolute
-        z-index 200
-        top 0
+        /*position absolute*/
+        /*z-index 200*/
+        /*top 0*/
         margin 0 auto
         width 100vw
 

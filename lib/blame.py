@@ -1,5 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor, Future
+from concurrent.futures import ThreadPoolExecutor, Future, wait, ALL_COMPLETED
 from datetime import datetime
+from flask_socketio import emit
 from typing import List, Dict
 import time
 
@@ -18,15 +19,20 @@ class Blame:
 
         f.add_done_callback(self.__on_done)
 
-    @timed
+    # @timed
     def __on_done(self, f):
-        self.__end = time.perf_counter()
         error = f.exception()
         if error is not None:
             self.error = error
             raise RuntimeError(error)
 
-        self.data = f.result()
+        print(f.result()[0].result())
+        done, _ = wait(f.result(),
+             return_when=ALL_COMPLETED)
+
+        self.data = [f.result() for f in f.result() if f in done]
+        self.__end = time.perf_counter()
+        emit('blame_done', self.status())
 
     def done(self):
         return self.__f.done()
@@ -54,7 +60,7 @@ class Blame:
 
     @timed
     def author_layers(self):
-        if not self.__f.done() or self.data is None:
+        if not self.done() or self.data is None:
             return [], []
 
         author_ys: Dict[str, List[int]] = {}
@@ -79,8 +85,8 @@ class Blame:
             return []
 
         commit_authors = []
-        for commit_date, file_authors in [f.result() for f in self.data]:
-            new_results = {k:v for k, v in file_authors.items() if v is not None}
+        for commit_date, file_authors in self.data:
+            new_results = {k: v for k, v in file_authors.items() if v is not None}
             commit_authors.append((commit_date, new_results))
 
         commit_dates: List[datetime] = []
@@ -117,9 +123,6 @@ class BlameManager:
             raise error.ErrRepoMissing(name)
 
         if name in self.blames:
-            # status = self.blames[name].status()
-            # if not status['status']['done']:
-            #     return status
             return self.blames[name]
 
         rs = self.repo_stats[name]
@@ -133,10 +136,3 @@ class BlameManager:
         _blame = Blame(f)
         self.blames[name] = _blame
         return _blame
-
-    def status(self, name: str):
-        if name not in self.repo_stats:
-            raise error.ErrRepoMissing(name)
-        if name not in self.blames:
-            raise error.ErrRepoNotBlamed(name)
-        return self.blames[name].status()
