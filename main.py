@@ -24,9 +24,9 @@ app = FlaskAPI(__name__)
 # ]
 CORS(app,
      supports_credentials=True,
-     origins=['http://localhost:4000'])
+     origins=['http://localhost:8080'])
 
-app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
+app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=False))
 
 # Optional, for adding batch query support (used in Apollo-Client)
 # app.add_url_rule('/graphql/batch', view_func=GraphQLView.as_view('graphql', schema=schema, batch=True))

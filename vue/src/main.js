@@ -1,19 +1,28 @@
-import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
+import ApolloClient from 'apollo-boost';
+import Vue from 'vue';
+import VueApollo from 'vue-apollo';
 
-import socketio from 'socket.io';
-import VueSocketIO from 'vue-socket.io';
+import App from './App.vue';
+import router from './router';
+import store from './store';
 
-export const SocketInstance = socketio('http://localhost:5000');
 
-Vue.use(VueSocketIO, SocketInstance, store);
+const apolloClient = new ApolloClient({
+    // You should use an absolute URL here
+    uri: 'http://localhost:5000/graphql'
+});
 
-Vue.config.productionTip = false
+Vue.use(VueApollo);
+
+const apolloProvider = new VueApollo({
+    defaultClient: apolloClient,
+});
+
+Vue.config.productionTip = false;
 
 new Vue({
-  router,
-  store,
-  render: h => h(App)
-}).$mount('#app')
+    router,
+    store,
+    apolloProvider,
+    render: (h) => h(App)
+}).$mount('#app');

@@ -1,6 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, Future, wait, ALL_COMPLETED
 from datetime import datetime
-from flask_socketio import emit
 from typing import List, Dict
 import time
 
@@ -32,7 +31,6 @@ class Blame:
 
         self.data = [f.result() for f in f.result() if f in done]
         self.__end = time.perf_counter()
-        emit('blame_done', self.status())
 
     def done(self):
         return self.__f.done()
