@@ -8,6 +8,7 @@ from typing import Any, Dict
 from flask import request
 from flask_api import FlaskAPI, status
 from flask_cors import CORS
+from flask_graphql import GraphQLView
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -17,11 +18,18 @@ from lib.repo import RepoStat
 from lib.schema import schema
 
 app = FlaskAPI(__name__)
-app.config['DEFAULT_RENDERERS'] = [
-    'flask_api.renderers.JSONRenderer',
-    'flask_api.renderers.BrowsableAPIRenderer',
-]
-CORS(app)
+# app.config['DEFAULT_RENDERERS'] = [
+#     'flask_api.renderers.JSONRenderer',
+#     'flask_api.renderers.BrowsableAPIRenderer',
+# ]
+CORS(app,
+     supports_credentials=True,
+     origins=['http://localhost:4000'])
+
+app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
+
+# Optional, for adding batch query support (used in Apollo-Client)
+# app.add_url_rule('/graphql/batch', view_func=GraphQLView.as_view('graphql', schema=schema, batch=True))
 
 repo_stats: Dict[str, RepoStat] = {}
 
@@ -31,16 +39,6 @@ ext_whitelist = (
 )
 
 blame_manager = BlameManager()
-
-
-@app.route('/graphql')
-def handle_graphql():
-    result = schema.execute(request.data)
-
-    return {
-        'request.data': request.data,
-        'result': result
-    }
 
 
 @app.route('/repos')
@@ -103,4 +101,4 @@ def handle_repo(name: str):
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    app.run()
