@@ -1,4 +1,4 @@
-import * as fetch from 'd3-fetch';
+// import * as fetch from 'd3-fetch';
 
 import * as ls from "./localstorage";
 import {SET_LAYERS, SET_AUTHORS} from './stackplot'
