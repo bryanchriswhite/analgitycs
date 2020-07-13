@@ -70,20 +70,12 @@
     import {mapState, mapMutations} from 'vuex';
     // import gql from 'graphql-tag';
 
-    import {SET_COLOR} from '@/store/theme';
-    // import StackPlot from '@/components/StackPlot.vue';
-    // import BlameManager from '@/components/BlameManager';
-    // import BlameHistory from '@/components/blame_history'
-
     export default {
         name: 'Home',
         apollo: {
             // hello: gql`query{hello}`
         },
         components: {
-            // BlameManager,
-            // BlameHistory,
-            // StackPlot,
         },
         data: () => ({
             dialog: false,
@@ -103,10 +95,6 @@
                     url: 'git@github.com:storj/uplink'
                 }
             ],
-            // options: [
-            //     {text: "Dark", value: "hsl(0,0%,24%)"},
-            //     {text: "Light", value: "hsl(0,0%,96%)"}
-            // ]
         }),
         computed: {
             ...mapState('stackplot', [
@@ -117,6 +105,12 @@
                 bgColor: 'color',
             })
         },
-        methods: mapMutations('theme', [SET_COLOR])
+        methods: {
+            async addRepo() {
+                const result = this.$apollo.mutate({
+                    mutation: gql`mutation (`
+                })
+            }
+        }
     }
 </script>
