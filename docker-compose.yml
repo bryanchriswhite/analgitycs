@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+#  truffle:
+#    image: trufflesuite/ganache-cli:latest
+#    ports:
+#      - 8545:8545
+  arango:
+    image: arangodb/arangodb:latest
+    ports:
+      - 8529:8529
+  analyzer:
+    build: .
+    ports:
+      - 5000:5000
+    volumes:
+      - .:/var/app
+  viewer:
+    build: ./vue
+    ports:
+      - 8080:8080
+    volumes:
+      - ./vue:/var/app
+#  solc:
+#    image: ethereum/solc:stable
+#    command: "-o /sources/output "
+#    volumes:
+#      - ./solidity:/sources
