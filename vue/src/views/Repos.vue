@@ -26,9 +26,40 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-btn fab class="mt-3">
-      <v-icon >mdi-plus-thick</v-icon>
-    </v-btn>
+    <v-dialog v-model="dialog" persistent max-width="290">
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+            fab
+            class="mt-3"
+            color="primary"
+            dark
+            v-bind="attrs"
+            v-on="on"
+        >
+          <v-icon>mdi-plus-thick</v-icon>
+        </v-btn>
+      </template>
+      <v-card>
+        <v-card-title class="headline">Add a new repo</v-card-title>
+        <v-card-text>
+          <v-form>
+            <v-text-field
+                label="Name"
+                v-model="newRepoName"
+            />
+            <v-text-field
+                label="URL"
+                v-model="newRepoURL"
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" text @click="dialog = false">Cancel</v-btn>
+          <v-btn color="green darken-1" text @click="dialog = false">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!--        <blame-manager/>-->
     <!--        <blame-history/>-->
     <!--        <StackPlot :layers="layers" :authors="authors"/>-->
@@ -55,6 +86,9 @@
             // StackPlot,
         },
         data: () => ({
+            dialog: false,
+            newRepoName: '',
+            newRepoURL: '',
             repos: [
                 {
                     name: 'storj/storj',

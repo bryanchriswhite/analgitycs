@@ -6,10 +6,11 @@
         color="primary"
         dark
     >
-      <v-btn text>
-        <v-icon
-            class="mr-3"
-            v-on:click="toggleDrawer">
+      <v-btn text
+             class="mr-3"
+             v-on:click="toggleDrawer"
+      >
+        <v-icon>
           mdi-menu
         </v-icon>
       </v-btn>
