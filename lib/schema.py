@@ -1,7 +1,8 @@
 from os import environ
 
 from pyArango.connection import *
-from graphene import ObjectType, String, Schema, List, Boolean, Field, Mutation
+from pyArango.theExceptions import pyArangoException
+from graphene import ObjectType, String, Schema, List, Boolean, Field, Mutation, Int
 
 # TODO: use proper migrations
 conn = Connection(
@@ -25,8 +26,18 @@ else:
 
 
 class Repo(ObjectType):
+    key = Int()
+    rev = String()
     name = String()
     url = String()
+
+    @staticmethod
+    def resolve_key(parent, info):
+        return parent['_key']
+
+    @staticmethod
+    def resolve_rev(parent, info):
+        return parent['_rev']
 
 
 class RootQuery(ObjectType):
@@ -43,10 +54,20 @@ class TrackRepo(Mutation):
         url = String()
 
     ok = Boolean()
-    repo = Field(lambda: Repo)
 
-    def mutate(root, info):
-        return
+    @staticmethod
+    def mutate(root, info, name, url):
+        try:
+            repo_collection.createDocument({
+                'name': name,
+                'url': url
+            }).save()
+            ok = True
+        except pyArangoException as e:
+            # TODO: log/report error
+            ok = False
+        finally:
+            return TrackRepo(ok=ok)
 
 
 class RootMutation(Mutation):
@@ -56,4 +77,4 @@ class RootMutation(Mutation):
         return
 
 
-schema = Schema(query=RootQuery)  # , mutation=RootMutation)
+schema = Schema(query=RootQuery, mutation=RootMutation)
