@@ -3,7 +3,8 @@
     <v-row>
       <v-col
           v-for="repo in repos"
-          :key="repo.name"
+          :key="`${repo.key}${repo.rev}`"
+          sm="12" md="6"
       >
         <v-card>
           <v-card-title>
@@ -53,7 +54,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="green darken-1" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="green darken-1" text @click="dialog = false">Save</v-btn>
+          <v-btn color="green darken-1" text @click="trackRepo">Submit</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -68,30 +69,17 @@
         name: 'Repos',
         apollo: {
             repos: gql`query{repos {
+                key,
+                rev,
                 name,
                 url
             }}`
         },
-        components: {
-        },
+        components: {},
         data: () => ({
             dialog: false,
             repoName: '',
             repoURL: '',
-            repos: [
-                {
-                    name: 'storj/storj',
-                    url: 'git@github.com:storj/storj'
-                },
-                {
-                    name: 'storj/uplink-c',
-                    url: 'git@github.com:storj/uplink-c'
-                },
-                {
-                    name: 'storj/uplink',
-                    url: 'git@github.com:storj/uplink'
-                }
-            ],
         }),
         computed: {
             // ...mapState('stackplot', [
@@ -101,10 +89,21 @@
         },
         methods: {
             async trackRepo() {
-                const result = await this.$apollo.mutate({
-                    mutation: gql``
+                const {repoName: name, repoURL: url} = this;
+                const {data: {trackRepo}} = await this.$apollo.mutate({
+                    mutation: gql`mutation ($name: String!, $url: String!) {
+                        trackRepo(name: $name, url: $url) {
+                          ok
+                        }
+                    }`,
+                    variables: {
+                        name,
+                        url
+                    }
                 })
-                return result
+                if (trackRepo.ok) {
+                    this.dialog = false;
+                }
             }
         }
     }
