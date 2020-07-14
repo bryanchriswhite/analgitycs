@@ -3,7 +3,7 @@ import subprocess
 
 def clone(url, repo_root):
     p = subprocess.run(['git', 'clone', url, repo_root],
-                       capture_output=False)
+                       capture_output=True)
 
     if p.returncode != 0:
         raise IOError(p.stderr.decode("utf8"))

@@ -88,8 +88,10 @@
                 const {data: {trackRepo}} = await this.$apollo.mutate({
                     mutation: gql`mutation ($name: String!, $url: String!) {
                         trackRepo(name: $name, url: $url) {
-                            name,
-                            url,
+                          repo {
+                              name,
+                              url,
+                          }
                         }
                     }`,
                     variables: {

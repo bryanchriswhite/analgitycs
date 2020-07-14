@@ -84,7 +84,7 @@ class TrackCommit(Mutation):
             db[COMMITS].createDocument({
                 'hash': hash,
                 'date': date
-            })
+            }).save()
             return TrackCommit()
         except pyArangoException as e:
             # TODO:
@@ -118,7 +118,7 @@ class TrackRepo(Mutation):
             # TODO: error handling
             [done, _] = wait(commit_fs, return_when=ALL_COMPLETED)
 
-            for [hash, date] in done:
+            for [hash, date] in [f.result() for f in done if f.result() is not None]:
                 TrackCommit.mutate(root, info, hash, date)
 
             return TrackRepo(repo=repo)
