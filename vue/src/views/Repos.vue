@@ -3,7 +3,7 @@
     <v-row>
       <v-col
           v-for="repo in repos"
-          :key="repo"
+          :key="repo.name"
       >
         <v-card>
           <v-card-title>
@@ -12,9 +12,6 @@
           <v-card-subtitle>
             {{repo.url}}
           </v-card-subtitle>
-          <!--          <v-card-text>-->
-          <!--            {{repo.description}}-->
-          <!--          </v-card-text>-->
           <v-card-actions class="d-flex justify-space-between">
             <v-btn text>
               <v-icon>mdi-pencil</v-icon>
@@ -45,11 +42,11 @@
           <v-form>
             <v-text-field
                 label="Name"
-                v-model="newRepoName"
+                v-model="repoName"
             />
             <v-text-field
                 label="URL"
-                v-model="newRepoURL"
+                v-model="repoURL"
             />
           </v-form>
         </v-card-text>
@@ -60,27 +57,27 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <!--        <blame-manager/>-->
-    <!--        <blame-history/>-->
-    <!--        <StackPlot :layers="layers" :authors="authors"/>-->
   </v-container>
 </template>
 
 <script>
-    import {mapState, mapMutations} from 'vuex';
-    // import gql from 'graphql-tag';
+    // import {mapState} from 'vuex';
+    import gql from 'graphql-tag';
 
     export default {
-        name: 'Home',
+        name: 'Repos',
         apollo: {
-            // hello: gql`query{hello}`
+            repos: gql`query{repos {
+                name,
+                url
+            }}`
         },
         components: {
         },
         data: () => ({
             dialog: false,
-            newRepoName: '',
-            newRepoURL: '',
+            repoName: '',
+            repoURL: '',
             repos: [
                 {
                     name: 'storj/storj',
@@ -97,19 +94,17 @@
             ],
         }),
         computed: {
-            ...mapState('stackplot', [
-                'layers',
-                'authors',
-            ]),
-            ...mapState('theme', {
-                bgColor: 'color',
-            })
+            // ...mapState('stackplot', [
+            //     'layers',
+            //     'authors',
+            // ]),
         },
         methods: {
-            async addRepo() {
-                const result = this.$apollo.mutate({
-                    mutation: gql`mutation (`
+            async trackRepo() {
+                const result = await this.$apollo.mutate({
+                    mutation: gql``
                 })
+                return result
             }
         }
     }

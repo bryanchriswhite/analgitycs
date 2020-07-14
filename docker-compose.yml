@@ -14,6 +14,11 @@ services:
     build: .
     ports:
       - 5000:5000
+    environment:
+      ARANGO_URL: http://aranngo:8529
+      ARANGO_DB: analyzer
+      ARANGO_USER: root
+      ARANGO_PASS: arangodb
     volumes:
       - .:/var/app
   viewer:
