@@ -1,5 +1,5 @@
 from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor, wait, ALL_COMPLETED
-# from dateutil.parser import isoparse
+from dateutil.parser import isoparse
 from multiprocessing import cpu_count
 import re
 from typing import List

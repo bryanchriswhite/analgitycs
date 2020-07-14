@@ -17,7 +17,10 @@
             <v-btn text>
               <v-icon>mdi-pencil</v-icon>
             </v-btn>
-            <v-btn text>
+            <v-btn
+                text
+                @click="deleteRepo(repo.key)"
+            >
               <v-icon>mdi-delete</v-icon>
             </v-btn>
           </v-card-actions>
@@ -62,7 +65,6 @@
 </template>
 
 <script>
-    // import {mapState} from 'vuex';
     import gql from 'graphql-tag';
 
     export default {
@@ -75,25 +77,19 @@
                 url
             }}`
         },
-        components: {},
         data: () => ({
             dialog: false,
             repoName: '',
             repoURL: '',
         }),
-        computed: {
-            // ...mapState('stackplot', [
-            //     'layers',
-            //     'authors',
-            // ]),
-        },
         methods: {
             async trackRepo() {
                 const {repoName: name, repoURL: url} = this;
                 const {data: {trackRepo}} = await this.$apollo.mutate({
                     mutation: gql`mutation ($name: String!, $url: String!) {
                         trackRepo(name: $name, url: $url) {
-                          ok
+                            name,
+                            url,
                         }
                     }`,
                     variables: {
@@ -103,6 +99,19 @@
                 })
                 if (trackRepo.ok) {
                     this.dialog = false;
+                }
+            },
+            async deleteRepo(key) {
+                const {data: {deleteRepo}} = await this.$apollo.mutate({
+                    mutation: gql`mutation ($key: Int!) {
+                        deleteRepo(key: $key) {ok}
+                    }`,
+                    variables: {
+                        key
+                    }
+                })
+                if (deleteRepo.ok) {
+                    // TODO:
                 }
             }
         }

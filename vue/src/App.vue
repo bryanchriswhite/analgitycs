@@ -8,7 +8,7 @@
     >
       <v-btn text
              class="mr-3"
-             v-on:click="toggleDrawer"
+             @click="toggleDrawer"
       >
         <v-icon>
           mdi-menu
@@ -55,8 +55,6 @@
 <script>
     export default {
         name: 'App',
-        // components: {
-        // },
         data: () => ({
             drawer: false,
         }),

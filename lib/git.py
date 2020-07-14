@@ -1,6 +1,14 @@
 import subprocess
 
 
+def clone(url, repo_root):
+    p = subprocess.run(['git', 'clone', url, repo_root],
+                       capture_output=False)
+
+    if p.returncode != 0:
+        raise IOError(p.stderr.decode("utf8"))
+
+
 def blame(file, repo_root):
     p = subprocess.run(["git", "blame", "--line-porcelain", file],
                        capture_output=True,

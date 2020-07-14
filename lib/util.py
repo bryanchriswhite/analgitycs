@@ -25,3 +25,7 @@ def filter_ext(ext_whitelist, excluded_exts=None):
             excluded_exts.add(ext)
         return exclude
     return _filter
+
+
+def format_filename(input):
+    return "".join([x if x.isalnum() else "_" for x in input])
