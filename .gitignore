@@ -4,5 +4,8 @@ github.apikey
 venv/
 __pycache__/
 
-# Secrets
-./secr
+# default local git dir
+repos/
+
+# Environment specific
+docker-compose.override.yml

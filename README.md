@@ -1,12 +1,13 @@
 
 ```bash
-docker-compose up
+mkdir ./repos       # default local git dir
+docker-compose up   # start the party
 ```
 
 #### Defaut Endpoints
 
-[viewer :8080](http://127.0.0.1:8080)
+[Viewer UI :8080](http://127.0.0.1:8080)
 
-[analyzer :5000/graphl](http://127.0.0.1:5000/graphql)
+[Analyzer API :5000/graphl](http://127.0.0.1:5000/graphql)
 
-[arango (API/UI) :8529](http://127.0.0.1:8529)
+[Arango API/UI :8529](http://127.0.0.1:8529)

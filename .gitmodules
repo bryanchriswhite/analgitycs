@@ -1,9 +1,0 @@
-[submodule "storj"]
-	path = storj
-	url = git@github.com:storj/storj
-[submodule "uplink"]
-	path = uplink
-	url = git@github.com:storj/uplink
-[submodule "uplink-c"]
-	path = uplink-c
-	url = git@github.com:storj/uplink-c
