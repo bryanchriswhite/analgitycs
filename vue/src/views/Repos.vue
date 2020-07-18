@@ -98,10 +98,12 @@
                         store.writeQuery({query: REPOS_QUERY, data})
                     },
                     optimisticResponse: {
-                        // __typename: 'Mutation',
                         trackRepo: {
-                            // __typename: 'Repo',
+                            __typename: 'Mutation',
                             repo: {
+                                __typename: 'Repo',
+                                key: '-1',
+                                rev: '',
                                 name,
                                 url
                             }
@@ -112,21 +114,33 @@
                         url
                     }
                 })
-                if (trackRepo.ok) {
+                if (trackRepo.repo) {
                     this.dialog = false;
+                    this.repoName = ''
+                    this.repoURL = ''
                 }
             },
             async deleteRepo(key) {
-                const {data: {deleteRepo}} = await this.$apollo.mutate({
+                const deleteRepo = await this.$apollo.mutate({
                     mutation: gql`mutation ($key: Int!) {
                         deleteRepo(key: $key) {ok}
                     }`,
+                    update: (store) => {
+                        let data = store.readQuery({query: REPOS_QUERY})
+                        const startIndex = data.repos.findIndex(r => r.key === key) - 1
+                        data.repos.splice(startIndex, 1)
+                        store.writeQuery({query: REPOS_QUERY, data})
+                    },
                     variables: {
                         key
                     }
                 })
                 if (deleteRepo.ok) {
-                    // TODO:
+                    this.dialog = false
+                    this.repoName = ''
+                    this.repoURL = ''
+                } else {
+                    // TODO: error handling
                 }
             }
         }

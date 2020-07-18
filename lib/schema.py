@@ -183,42 +183,41 @@ class TrackRepo(g.Mutation):
 
     @staticmethod
     def mutate(root, info, name: str, url: str):
-        repo_doc: Document = None
+        repo: Document = None
         try:
             repo_root = path.join(GIT_ROOT, format_filename(name))
-            repo_doc = db[REPOS].createDocument({
+            repo = db[REPOS].createDocument({
                 'name': name,
                 'url': url,
                 'path': repo_root,
             })
-            repo_doc.save()
+            repo.save()
 
-            # TODO:
+            # TODO: refactor #
             # try:
             clone(url, repo_root)
             # except _ as e:
 
-            # TODO: refactor
             rs = RepoStat(name=name, path=repo_root)
 
             commit_log_pool = ThreadPoolExecutor(MAX_WORKERS)
             commit_fs = rs.commits(commit_log_pool, 'master')
             # TODO: error handling
             [done, _] = wait(commit_fs, return_when=ALL_COMPLETED)
-            # TODO: something better
             commits: List[Dict[str, any]] = [{'hash': h, 'date': d} for [h, d] in
                                              [f.result() for f in done if f.result() is not None]]
+            ##################
 
             # NB: track master by default
-            defaultRange = TrackRange.mutate(root, info, commits, branch='master')
+            default_range = TrackRange.mutate(root, info, commits, branch='master')
 
-            return TrackRepo(defaultRange=defaultRange)
+            return TrackRepo(repo=repo, defaultRange=default_range)
         except (pyArangoException, GraphQLLocatedError, AttributeError) as e:
             # TODO: log/report error
-            if repo_doc is not None:
+            if repo is not None:
                 # TODO: log/report error
-                rmtree(repo_doc.path, ignore_errors=True)
-                repo_doc.delete()
+                rmtree(repo.path, ignore_errors=True)
+                repo.delete()
             raise e
 
 
