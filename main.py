@@ -31,73 +31,18 @@ app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=sch
 # Optional, for adding batch query support (used in Apollo-Client)
 # app.add_url_rule('/graphql/batch', view_func=GraphQLView.as_view('graphql', schema=schema, batch=True))
 
-repo_stats: Dict[str, RepoStat] = {}
-
-excluded_exts = set()
-ext_whitelist = (
-    ".go", ".proto", ".c", ".h", ".sh", ".md", ".xml", ".wixproj", ".wsx", ".cs"
-)
+# TODO: this should probably be an argument to a track-commit or analysis mutation
+# excluded_exts = set()
+# ext_whitelist = (
+#     ".go", ".proto", ".c", ".h", ".sh", ".md", ".xml", ".wixproj", ".wsx", ".cs"
+# )
 
 blame_manager = BlameManager()
-
-
-@app.route('/repos')
-def handle_repos():
-    return repo_stats
 
 
 @app.errorhandler(500)
 def handle_500(error):
     return {'error': 'internal server error'}, status.HTTP_500_INTERNAL_SERVER_ERROR
-
-
-@app.route('/repo/<string:name>', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def handle_repo(name: str):
-    if request.method == 'GET':
-        try:
-            _status = blame_manager.status(name)
-            if _status is None:
-                return {'msg': f'repo {name} hasn\'t been blamed yet'}
-            return _status
-        except error.ResponseError as e:
-            return e.response()
-
-    if request.data is None:
-        return {
-                   'error': 'no request params'
-               }, status.HTTP_400_BAD_REQUEST
-
-    if request.method == 'POST':
-        if name in repo_stats:
-            return {'error': 'repo already exists'}, status.HTTP_409_CONFLICT
-        path = request.data.pop('path')
-        rs = RepoStat(name, path, **request.data)
-        print(rs.name)
-        print(rs.path)
-        print(rs.url)
-        blame_manager.add(rs)
-        return {
-                   'msg': f'repo created',
-                   'name': name
-               }, status.HTTP_201_CREATED
-
-    if request.method == 'PUT':
-        range_ref = request.data.pop('range_ref')
-        # ext_whitelist = request.data.pop('ext_whitelist')
-        # filter_ext = util.filter_ext(ext_whitelist)
-        blame = blame_manager.blame(name, range_ref, **request.data)
-        _status = blame.status()
-        if not _status['status']['done']:
-            return _status, status.HTTP_202_ACCEPTED
-
-        return _status
-
-    if request.method == 'DELETE':
-        blame_manager.delete(name)
-        return {
-            'msg': f'deleted',
-            'name': name
-        }
 
 
 if __name__ == '__main__':
