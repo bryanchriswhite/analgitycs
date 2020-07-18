@@ -67,15 +67,14 @@
 <script>
     import gql from 'graphql-tag';
 
+    const REPOS_QUERY = gql`query{repos{
+        key, rev, name, url
+    }}`
+
     export default {
         name: 'Repos',
         apollo: {
-            repos: gql`query{repos {
-                key,
-                rev,
-                name,
-                url
-            }}`
+            repos: REPOS_QUERY
         },
         data: () => ({
             dialog: false,
@@ -89,11 +88,25 @@
                     mutation: gql`mutation ($name: String!, $url: String!) {
                         trackRepo(name: $name, url: $url) {
                           repo {
-                              name,
-                              url,
+                              key, rev, name, url
                           }
                         }
                     }`,
+                    update: (store, {data: {trackRepo}}) => {
+                        const data = store.readQuery({query: REPOS_QUERY})
+                        data.repos.push(trackRepo.repo)
+                        store.writeQuery({query: REPOS_QUERY, data})
+                    },
+                    optimisticResponse: {
+                        // __typename: 'Mutation',
+                        trackRepo: {
+                            // __typename: 'Repo',
+                            repo: {
+                                name,
+                                url
+                            }
+                        }
+                    },
                     variables: {
                         name,
                         url

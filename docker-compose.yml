@@ -15,17 +15,23 @@ services:
     ports:
       - 5000:5000
     environment:
+      APP_PATH: /var/app
       GIT_ROOT: /var/app/repos
-      ARANGO_URL: http://aranngo:8529
+      ARANGO_URL: http://arango:8529
       ARANGO_DB: analyzer
       ARANGO_USER: root
       ARANGO_PASS: arangodb
+    depends_on:
+      - arango
+#      - truffle
     volumes:
       - .:/var/app
   viewer:
     build: ./vue
     ports:
       - 8080:8080
+    depends_on:
+      - analyzer
     volumes:
       - ./vue:/var/app
 #  solc:

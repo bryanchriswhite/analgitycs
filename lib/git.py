@@ -34,8 +34,9 @@ def ls_files(repo_root, dir=None):
 
 
 def log(repo_root, rev_range):
+    # TODO: improve format
     args = ["git", "log",
-            "--format=reference",
+            "--format=%H (%s, %cs)",
             "--date=iso-strict", rev_range,
             "--reverse"]
             # ]

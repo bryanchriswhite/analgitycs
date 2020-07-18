@@ -1,56 +1,71 @@
-from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, Future
-from graphene import ObjectType, String, Schema, List, Boolean, Field, Mutation, Int, DateTime
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 from multiprocessing import cpu_count
 from os import environ, path
+
+import graphene as g
+from graphql.error import GraphQLLocatedError
 from pyArango.theExceptions import pyArangoException
 from pyArango.document import Document
 from shutil import rmtree
+from typing import List, Dict
 
-from lib.db import db, REPOS, COMMITS, FILES
+from lib.db import db, REPOS, COMMITS, FILES, CHILD_OF_COMMIT
 from lib.git import clone
 from lib.repo import RepoStat
-from lib.util import format_filename
+from lib.util import format_filename, pluck
 
 # TODO: something else
 MAX_WORKERS = cpu_count()
 GIT_ROOT = environ['GIT_ROOT']
 
 
-class Author(ObjectType):
-    name = String()
-    lines = Int()
-    additions = Int()
-    deletions = Int()
+class Author(g.ObjectType):
+    name = g.String()
+    lines = g.Int()
+    additions = g.Int()
+    deletions = g.Int()
 
 
-class File(ObjectType):
-    authors = List(Author)
+class File(g.ObjectType):
+    authors = g.List(Author)
 
-    length = Int()  # Bytes
-    name = String()
+    length = g.Int()  # Bytes
+    name = g.String()
 
 
-class Commit(ObjectType):
-    files = List(File)
+class Commit(g.ObjectType):
+    files = g.List(File)
 
-    hash = String()
-    author = String()
-    # commiter = String()
-    message = String()
-    datetime = DateTime()
+    hash = g.String()
+    author = g.String()
+    # commiter = g.String()
+    message = g.String()
+    datetime = g.DateTime()
 
     @staticmethod
     def resolve_files(parent, info):
         return db[FILES].fetchByExample({'repo': parent._key})
 
 
-class Repo(ObjectType):
-    commits = List(Commit)
+class Range(g.ObjectType):
+    # TODO: hash type?
+    start = g.String()
+    end = g.String()
+    commits = g.List(Commit)
 
-    key = Int()
-    rev = String()
-    name = String()
-    url = String()
+    @staticmethod
+    def resolve_commits(parent, info):
+        raise Exception('not implemented')
+        # return db[COMMITS].fetchByExample({'range': parent.range})
+
+
+class Repo(g.ObjectType):
+    ranges = g.List(Range)
+
+    key = g.Int()
+    rev = g.String()
+    name = g.String()
+    url = g.String()
 
     @staticmethod
     def resolve_key(parent, info):
@@ -61,85 +76,161 @@ class Repo(ObjectType):
         return parent['_rev']
 
     @staticmethod
-    def resolve_commits(parent, info):
-        return db[COMMITS].fetchByExample({'repo': parent._key})
+    def resolve_ranges(parent, info):
+        raise Exception('not implemented')
+        # return db[RANGES].fetchByExample({'repo': parent.repo})
 
 
-class RootQuery(ObjectType):
-    repos = List(Repo)
+class RootQuery(g.ObjectType):
+    repos = g.List(Repo)
 
     @staticmethod
     def resolve_repos(root, info):
         return db[REPOS].fetchAll()
 
 
-class TrackCommit(Mutation):
+class TrackCommit(g.Mutation):
     class Arguments:
-        hash = String()
-        date = DateTime()
+        hash = g.String()
+        date = g.DateTime()
+
+    key = g.String()
+    parent_key = g.String()
+    # TODO: Hash type?
+    hash = g.String()
+    commit_date = g.DateTime()
+    committer = g.String()
+    author_date = g.DateTime()
+    author = g.String()
+
+    # file = g.List(File)
 
     @staticmethod
-    def mutate(root, info, hash, date):
+    def mutate(root, info,
+               parent_key: str,
+               hash: str,
+               author: str,
+               author_date: str,
+               committer: str,
+               commit_date: str,
+               ):
+
+        # TODO: check if commits are already tracked first; if so, only add edges.
         try:
-            db[COMMITS].createDocument({
+            commit_doc = db[COMMITS].createDocument({
+                'parent_key': parent_key,
                 'hash': hash,
-                'date': date
-            }).save()
-            return TrackCommit()
+                'author': author,
+                'author_date': author_date,
+                'committer': committer,
+                'committer_date': commit_date
+            })
+            commit_doc.save()
+
+            # TODO: error handling -- `commit_doc['key'] is not None`
+            commit = Commit(
+                parent_key=parent_key,
+                key=commit_doc['key'],
+                hash=hash,
+                author=author,
+                author_date=author_date,
+                committer=committer,
+                commit_date=commit_date
+            )
+
+            if not parent_key == '':
+                # NB: `[]` uses aragno cache
+                parent_doc = db[COMMITS][parent_key]
+                # TODO: error handling
+                db[CHILD_OF_COMMIT].createDocument() \
+                    .links(hash, parent_doc, commit_doc)
+
+            return TrackCommit(commit=commit)
         except pyArangoException as e:
             # TODO:
             raise e
 
 
-class TrackRepo(Mutation):
+class TrackRange(g.Mutation):
     class Arguments:
-        name = String()
-        url = String()
+        # TODO: hash type?
+        start = g.String()
+        end = g.String()
 
-    repo = Field(Repo)
+    commits = g.List(Commit)
 
     @staticmethod
-    def mutate(root, info, name, url):
-        repo: Document
+    def mutate(root, info, commits: List[Dict[str, any]], branch: str = '', range: str = ''):
+        _commits: List[Commit] = []
+        for commit in commits:
+            # args = {k:v for k,v in commit}
+            result = TrackCommit.mutate(root, info, **commit)
+            # TODO: error handling
+            _commit = result.commit
+            _commits.append(_commit)
+            parent_key = str(_commit.key)
+
+        return TrackRange(commits=_commits)
+
+
+class TrackRepo(g.Mutation):
+    class Arguments:
+        name = g.String()
+        url = g.String()
+
+    repo = g.Field(Repo)
+    defaultRange = g.Field(Range)
+
+    @staticmethod
+    def mutate(root, info, name: str, url: str):
+        repo_doc: Document = None
         try:
             repo_root = path.join(GIT_ROOT, format_filename(name))
-            repo = db[REPOS].createDocument({
+            repo_doc = db[REPOS].createDocument({
                 'name': name,
                 'url': url,
                 'path': repo_root,
             })
-            repo.save()
+            repo_doc.save()
 
+            # TODO:
+            # try:
             clone(url, repo_root)
+            # except _ as e:
+
+            # TODO: refactor
             rs = RepoStat(name=name, path=repo_root)
 
             commit_log_pool = ThreadPoolExecutor(MAX_WORKERS)
             commit_fs = rs.commits(commit_log_pool, 'master')
             # TODO: error handling
             [done, _] = wait(commit_fs, return_when=ALL_COMPLETED)
+            # TODO: something better
+            commits: List[Dict[str, any]] = [{'hash': h, 'date': d} for [h, d] in
+                                             [f.result() for f in done if f.result() is not None]]
 
-            for [hash, date] in [f.result() for f in done if f.result() is not None]:
-                TrackCommit.mutate(root, info, hash, date)
+            # NB: track master by default
+            defaultRange = TrackRange.mutate(root, info, commits, branch='master')
 
-            return TrackRepo(repo=repo)
-        except pyArangoException as e:
+            return TrackRepo(defaultRange=defaultRange)
+        except (pyArangoException, GraphQLLocatedError, AttributeError) as e:
             # TODO: log/report error
-            if repo is not None:
+            if repo_doc is not None:
                 # TODO: log/report error
-                rmtree(repo.path, ignore_errors=True)
-                repo.delete()
+                rmtree(repo_doc.path, ignore_errors=True)
+                repo_doc.delete()
             raise e
 
 
 # TODO: options for order/commit deletion
-class DeleteRepo(Mutation):
+class DeleteRepo(g.Mutation):
     class Arguments:
-        key = Int()
+        key = g.Int()
 
-    ok = Boolean()
+    ok = g.Boolean()
 
     @staticmethod
-    def mutate(root, info, key):
+    def mutate(root, info, key: str):
         try:
             repo = db[REPOS][key]
             if repo is None:
@@ -153,7 +244,7 @@ class DeleteRepo(Mutation):
             return False
 
 
-class RootMutation(Mutation):
+class RootMutation(g.Mutation):
     track_repo = TrackRepo.Field()
     delete_repo = DeleteRepo.Field()
 
@@ -161,4 +252,4 @@ class RootMutation(Mutation):
         return
 
 
-schema = Schema(query=RootQuery, mutation=RootMutation)
+schema = g.Schema(query=RootQuery, mutation=RootMutation)

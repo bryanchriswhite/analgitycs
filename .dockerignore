@@ -1,0 +1,10 @@
+venv
+.idea/
+.ipynb_checkpoints
+
+vue/
+solidity
+
+storj
+uplink
+uplink-c

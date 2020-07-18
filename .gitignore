@@ -3,3 +3,6 @@ github.apikey
 .ipynb_checkpoints/
 venv/
 __pycache__/
+
+# Secrets
+./secr
