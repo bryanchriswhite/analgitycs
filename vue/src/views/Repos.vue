@@ -27,99 +27,24 @@
         </v-card>
       </v-col>
     </v-row>
-    <v-dialog v-model="dialog" persistent max-width="290">
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn
-            fab
-            class="mt-3"
-            color="primary"
-            dark
-            v-bind="attrs"
-            v-on="on"
-        >
-          <v-icon>mdi-plus-thick</v-icon>
-        </v-btn>
-      </template>
-      <v-card>
-        <v-card-title class="headline">Add a new repo</v-card-title>
-        <v-card-text>
-          <v-form>
-            <v-text-field
-                label="Name"
-                v-model="repoName"
-            />
-            <v-text-field
-                label="URL"
-                v-model="repoURL"
-            />
-          </v-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="green darken-1" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="green darken-1" text @click="trackRepo">Submit</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <AddRepoDialog/>
   </v-container>
 </template>
 
 <script>
     import gql from 'graphql-tag';
-
-    const REPOS_QUERY = gql`query{repos{
-        key, rev, name, url
-    }}`
+    import AddRepoDialog from '@/components/dialogs/add-repo'
+    import {REPOS_QUERY} from '@/graphql/queries'
 
     export default {
         name: 'Repos',
+        components: {
+            AddRepoDialog,
+        },
         apollo: {
             repos: REPOS_QUERY
         },
-        data: () => ({
-            dialog: false,
-            repoName: '',
-            repoURL: '',
-        }),
         methods: {
-            async trackRepo() {
-                const {repoName: name, repoURL: url} = this;
-                const {data: {trackRepo}} = await this.$apollo.mutate({
-                    mutation: gql`mutation ($name: String!, $url: String!) {
-                        trackRepo(name: $name, url: $url) {
-                          repo {
-                              key, rev, name, url
-                          }
-                        }
-                    }`,
-                    update: (store, {data: {trackRepo}}) => {
-                        const data = store.readQuery({query: REPOS_QUERY})
-                        data.repos.push(trackRepo.repo)
-                        store.writeQuery({query: REPOS_QUERY, data})
-                    },
-                    optimisticResponse: {
-                        trackRepo: {
-                            __typename: 'Mutation',
-                            repo: {
-                                __typename: 'Repo',
-                                key: '-1',
-                                rev: '',
-                                name,
-                                url
-                            }
-                        }
-                    },
-                    variables: {
-                        name,
-                        url
-                    }
-                })
-                if (trackRepo.repo) {
-                    this.dialog = false;
-                    this.repoName = ''
-                    this.repoURL = ''
-                }
-            },
             async deleteRepo(key) {
                 const deleteRepo = await this.$apollo.mutate({
                     mutation: gql`mutation ($key: Int!) {
@@ -136,7 +61,6 @@
                     }
                 })
                 if (deleteRepo.ok) {
-                    this.dialog = false
                     this.repoName = ''
                     this.repoURL = ''
                 } else {

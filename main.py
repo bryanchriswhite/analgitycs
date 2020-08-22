@@ -1,21 +1,15 @@
 import os
 import sys
-import time
 # import traceback
-from concurrent.futures import ThreadPoolExecutor, Future
-from typing import Any, Dict
 
-from flask import request
 from flask_api import FlaskAPI, status
 from flask_cors import CORS
 from flask_graphql import GraphQLView
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lib import util, error
 from lib.blame import BlameManager
-from lib.repo import RepoStat
-from lib.schema import schema
+from lib.graphql.schema import schema
 
 app = FlaskAPI(__name__)
 # app.config['DEFAULT_RENDERERS'] = [

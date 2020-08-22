@@ -1,6 +1,3 @@
-from datetime import datetime
-
-from typing import Dict, List, Tuple
 import os.path as path
 
 from lib.my_types import AllRepoFileAuthors, FileAuthors, RepoAuthorTotals, TotalsDict
@@ -29,7 +26,3 @@ def filter_ext(ext_whitelist, excluded_exts=None):
 
 def format_filename(input):
     return "".join([x if x.isalnum() else "_" for x in input])
-
-
-def pluck(dict, *args):
-    return [dict[arg] for arg in args]
